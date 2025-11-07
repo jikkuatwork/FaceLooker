@@ -497,12 +497,32 @@ export class FaceLookerViewer {
     this.dragMouseMove = (e) => {
       if (!this.isDragging) return;
 
-      const x = e.clientX - offsetX;
-      const y = e.clientY - offsetY;
+      // Find the canvas element (parent of position: relative container)
+      const canvas = this.container.closest('.canvas-area');
+      if (!canvas) return;
 
-      this.container.style.position = 'fixed';
-      this.container.style.left = `${x}px`;
-      this.container.style.top = `${y}px`;
+      const canvasRect = canvas.getBoundingClientRect();
+      const viewerRect = this.container.getBoundingClientRect();
+
+      let x = e.clientX - offsetX;
+      let y = e.clientY - offsetY;
+
+      // Constrain to canvas bounds
+      const minX = canvasRect.left;
+      const minY = canvasRect.top;
+      const maxX = canvasRect.right - viewerRect.width;
+      const maxY = canvasRect.bottom - viewerRect.height;
+
+      x = Math.max(minX, Math.min(x, maxX));
+      y = Math.max(minY, Math.min(y, maxY));
+
+      // Convert to position relative to canvas
+      const relativeX = x - canvasRect.left;
+      const relativeY = y - canvasRect.top;
+
+      this.container.style.position = 'absolute';
+      this.container.style.left = `${relativeX}px`;
+      this.container.style.top = `${relativeY}px`;
     };
 
     this.dragMouseUp = () => {
