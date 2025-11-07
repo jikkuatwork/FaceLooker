@@ -416,19 +416,86 @@
       color: #333;
     }
 
+    .property-value {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .viewer-id {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Courier New', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      letter-spacing: 0.5px;
+      text-transform: lowercase;
+    }
+
+    /* Face Set Row (special layout for dropdown + button) */
+    .face-set-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .face-set-row .dropdown-selector {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .face-set-row .dropdown-selector:hover {
+      background: transparent;
+    }
+
+    /* Property Action Buttons */
+    .property-action-btn {
+      padding: 4px 12px;
+      background: #f0f0f0;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #333;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .property-action-btn:hover {
+      background: #e0e0e0;
+      border-color: #c0c0c0;
+    }
+
+    .property-action-btn:active {
+      background: #d0d0d0;
+    }
+
+    .property-action-danger {
+      color: #ff4d4d;
+      border-color: #ff4d4d;
+      background: #fff5f5;
+    }
+
+    .property-action-danger:hover {
+      background: #ffe8e8;
+      border-color: #ff3333;
+    }
+
     /* Dropdown Selector */
     .dropdown-selector {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 6px 12px;
       background: white;
-      border-bottom: 1px solid #e0e0e0;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
       cursor: pointer;
+      transition: all 0.15s ease;
     }
 
     .dropdown-selector:hover {
       background: #f8f8f8;
+      border-color: #d0d0d0;
     }
 
     .dropdown-label {
@@ -999,47 +1066,35 @@
         <!-- Design Tab Content -->
         <div class="tab-pane active" id="demo-tab">
 
-          <!-- Selection Display -->
-          <div class="selection-display">
-            <div class="selection-row">
-              <span class="selection-label">Layer</span>
-              <span id="selectionName" class="selection-value">No Selection</span>
-            </div>
-          </div>
-
-          <!-- Add Section -->
+          <!-- Canvas Section -->
           <div class="panel-section">
-            <div class="panel-section-header">Add Viewer</div>
-            <div class="panel-section-content">
-              <div class="dropdown-selector" id="faceSetSelector">
-                <span class="dropdown-label">Face Set</span>
-                <span class="dropdown-value">
-                  <span id="selectedFaceSet">01</span>
-                  <span class="dropdown-arrow">▼</span>
-                </span>
+            <div class="panel-section-header">Canvas</div>
+
+            <!-- Face Set Selection + Add Row -->
+            <div class="property-item">
+              <div class="face-set-row">
+                <div class="dropdown-selector" id="faceSetSelector">
+                  <span class="dropdown-label">Face Set</span>
+                  <span class="dropdown-value">
+                    <span id="selectedFaceSet">01</span>
+                    <span class="dropdown-arrow">▼</span>
+                  </span>
+                </div>
+                <button class="property-action-btn" id="addViewerBtn">
+                  <span>Add</span>
+                </button>
               </div>
             </div>
-          </div>
 
-          <!-- Action Buttons -->
-          <div class="action-buttons">
-            <button class="action-btn" id="addViewerBtn">
-              <span class="action-btn-icon">+</span>
-              <span>Add Viewer</span>
-            </button>
-            <button class="action-btn" id="resetBtn">
-              <span class="action-btn-icon">↺</span>
-              <span>Reset All</span>
-            </button>
-            <button class="action-btn action-btn-danger" id="clearCanvasBtn">
-              <span class="action-btn-icon">🗑️</span>
-              <span>Clear Canvas</span>
-            </button>
-          </div>
+            <!-- Clear Canvas Row -->
+            <div class="property-item">
+              <span class="property-label">Clear Canvas</span>
+              <button class="property-action-btn property-action-danger" id="clearCanvasBtn">
+                <span>Clear</span>
+              </button>
+            </div>
 
-          <!-- Properties Section -->
-          <div class="panel-section">
-            <div class="panel-section-header">Properties</div>
+            <!-- Debug Mode Row -->
             <div class="property-item">
               <span class="property-label">Debug Mode</span>
               <label class="toggle-switch">
@@ -1047,12 +1102,39 @@
                 <span class="toggle-slider"></span>
               </label>
             </div>
+
+            <!-- Show Labels Row -->
             <div class="property-item">
-              <span class="property-label">Show Label</span>
+              <span class="property-label">Show Labels</span>
               <label class="toggle-switch">
                 <input type="checkbox" id="labelToggle">
                 <span class="toggle-slider"></span>
               </label>
+            </div>
+          </div>
+
+          <!-- Viewer Section (Only shows when viewer is selected) -->
+          <div class="panel-section" id="viewerSection" style="display: none;">
+            <div class="panel-section-header">Viewer</div>
+
+            <!-- ID Row -->
+            <div class="property-item">
+              <span class="property-label">ID</span>
+              <span id="selectedViewerId" class="viewer-id">-</span>
+            </div>
+
+            <!-- Name Row -->
+            <div class="property-item">
+              <span class="property-label">Name</span>
+              <span id="selectedViewerName" class="property-value">No Selection</span>
+            </div>
+
+            <!-- Remove Viewer Row -->
+            <div class="property-item">
+              <span class="property-label">Remove Viewer</span>
+              <button class="property-action-btn property-action-danger" id="removeViewerBtn">
+                <span>Remove</span>
+              </button>
             </div>
           </div>
 
@@ -1292,10 +1374,19 @@
 
     // Canvas viewer management
     let viewers = [];
-    let viewerIdCounter = 0;
     let selectedViewer = null;
     let selectedFaceSet = '01'; // Default face set
     let availableFaceSets = [];
+
+    // Generate random alphanumeric ID
+    function generateViewerId() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 5; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
 
     function getViewerConfig(size) {
       const sizes = {
@@ -1436,6 +1527,8 @@
       // Randomize size selection
       const sizes = ['small', 'medium', 'large'];
       const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+
+      // Use current universal settings
       const debug = document.getElementById('debugToggle').checked;
       const showLabel = document.getElementById('labelToggle').checked;
       // draggable and resizable are always true now
@@ -1460,9 +1553,12 @@
         viewerY = padding + Math.random() * maxY;
       }
 
+      // Generate unique ID for this viewer
+      const viewerId = generateViewerId();
+
       const selectedFaceSetInfo = availableFaceSets.find(fs => fs.basePath === selectedFaceSet);
       const displayName = selectedFaceSetInfo ? selectedFaceSetInfo.displayName : selectedFaceSet;
-      addConsoleMessage(`Adding viewer #${viewerIdCounter + 1} from face set ${displayName} (${randomSize})...`);
+      addConsoleMessage(`Adding viewer ${viewerId} from face set ${displayName} (${randomSize}) - Debug: ${debug}, Labels: ${showLabel}`);
 
       const viewer = new FaceLookerViewer({
         faces: selectedFaceSet, // Use the full path from registry
@@ -1481,21 +1577,21 @@
           updateSelectedInfo();
         },
         onLoad: (imageCache, metaData) => {
-          addConsoleMessage(`✓ Viewer #${viewer.id} loaded: ${imageCache.size} images`);
+          addConsoleMessage(`✓ Viewer ${viewer.id} loaded: ${imageCache.size} images`);
           if (metaData) {
-            addConsoleMessage(`✓ Viewer #${viewer.id}: ${metaData.name} - ${metaData.subtitle}`);
+            addConsoleMessage(`✓ Viewer ${viewer.id}: ${metaData.name} - ${metaData.subtitle}`);
           }
         },
         onProgress: (progress, loaded, total) => {
-          if (loaded === 1) addConsoleMessage(`Viewer #${viewer.id} loading...`);
+          if (loaded === 1) addConsoleMessage(`Viewer ${viewer.id} loading...`);
         },
         onReady: () => {
-          addConsoleMessage(`✓ Viewer #${viewer.id} ready!`);
+          addConsoleMessage(`✓ Viewer ${viewer.id} ready!`);
         }
       });
 
       // Add unique ID and track
-      viewer.id = ++viewerIdCounter;
+      viewer.id = viewerId;
       viewers.push(viewer);
 
       // Position and add to canvas
@@ -1511,7 +1607,6 @@
     function clearCanvas() {
       viewers.forEach(viewer => viewer.destroy());
       viewers = [];
-      viewerIdCounter = 0;
       selectedViewer = null;
       updateSelectedInfo();
       addConsoleMessage('Canvas cleared');
@@ -1524,41 +1619,69 @@
     }
 
     function updateSelectedInfo() {
-      const selectionName = document.getElementById('selectionName');
+      const viewerSection = document.getElementById('viewerSection');
+      const selectedViewerId = document.getElementById('selectedViewerId');
+      const selectedViewerName = document.getElementById('selectedViewerName');
 
       if (selectedViewer) {
-        // Update sidebar controls to match selected viewer's state
-        document.getElementById('debugToggle').checked = selectedViewer.config.showDebug;
-        document.getElementById('labelToggle').checked = selectedViewer.config.showLabel;
+        // Show the Viewer section
+        viewerSection.style.display = 'block';
 
-        // Simple selection display: Index + Name
-        selectionName.textContent = `#${selectedViewer.id} Mammootty`;
+        // Show viewer ID
+        selectedViewerId.textContent = selectedViewer.id;
+
+        // Show viewer name (format: "01 Person Name" or "01 #ID" if no name available)
+        const selectedFaceSetInfo = availableFaceSets.find(fs => fs.basePath === selectedViewer.config.faces);
+        const folderName = selectedFaceSetInfo ? selectedFaceSetInfo.displayName : 'Unknown';
+
+        // Try to get the actual person name from the viewer's metadata
+        let personName = 'Unknown';
+        if (selectedViewer.metaData && selectedViewer.metaData.name) {
+          personName = selectedViewer.metaData.name;
+        } else {
+          // Fallback to trying to load metadata for this face set
+          try {
+            fetch(selectedViewer.config.faces + 'meta.json')
+              .then(response => response.json())
+              .then(metaData => {
+                if (metaData.name) {
+                  selectedViewerName.textContent = `${folderName} ${metaData.name}`;
+                }
+              })
+              .catch(() => {
+                // Keep fallback name
+              });
+          } catch (error) {
+            // Keep fallback name
+          }
+        }
+
+        selectedViewerName.textContent = `${folderName} ${personName}`;
       } else {
-        selectionName.textContent = 'No Selection';
+        // Hide the Viewer section
+        viewerSection.style.display = 'none';
+        selectedViewerId.textContent = '-';
+        selectedViewerName.textContent = 'No Selection';
       }
     }
 
-    function updateSelectedViewer() {
-      console.log('🎛️ updateSelectedViewer() called');
-      console.log('📱 selectedViewer:', selectedViewer);
-
-      if (!selectedViewer) {
-        console.log('❌ No selected viewer, returning');
-        return;
-      }
+    function updateAllViewers() {
+      console.log('🎛️ updateAllViewers() called');
 
       const debug = document.getElementById('debugToggle').checked;
       const showLabel = document.getElementById('labelToggle').checked;
 
-      console.log('🎛️ Control values:', { debug, showLabel });
+      console.log('🎛️ Universal settings:', { debug, showLabel });
 
-      selectedViewer.updateConfig({
-        showDebug: debug,
-        showLabel: showLabel
+      // Apply settings to all viewers
+      viewers.forEach(viewer => {
+        viewer.updateConfig({
+          showDebug: debug,
+          showLabel: showLabel
+        });
       });
 
-      updateSelectedInfo(); // Refresh display with new values
-      addConsoleMessage(`Updated viewer #${selectedViewer.id} properties`);
+      addConsoleMessage(`Updated all viewers: Debug=${debug}, Labels=${showLabel}`);
     }
 
     // Tab switching
@@ -1606,11 +1729,27 @@
     });
 
     document.getElementById('clearCanvasBtn').addEventListener('click', clearCanvas);
-    document.getElementById('resetBtn').addEventListener('click', resetViewers);
 
-    // Update selected viewer when controls change
+    // Remove individual viewer
+    document.getElementById('removeViewerBtn').addEventListener('click', () => {
+      if (selectedViewer) {
+        const viewerId = selectedViewer.id;
+        selectedViewer.destroy();
+
+        // Remove from viewers array
+        viewers = viewers.filter(v => v.id !== viewerId);
+
+        // Clear selection
+        selectedViewer = null;
+        updateSelectedInfo();
+
+        addConsoleMessage(`Removed viewer ${viewerId}`);
+      }
+    });
+
+    // Update all viewers when universal controls change
     ['debugToggle', 'labelToggle'].forEach(id => {
-      document.getElementById(id).addEventListener('change', updateSelectedViewer);
+      document.getElementById(id).addEventListener('change', updateAllViewers);
     });
 
     // Click on canvas to deselect
