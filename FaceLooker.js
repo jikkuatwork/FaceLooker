@@ -4,7 +4,7 @@
  */
 
 // Debug configuration - should match the main HTML file
-const DEBUG_MODE = false; // Set to false for production to reduce console noise
+const DEBUG_MODE = true; // Set to false for production to reduce console noise
 
 // Debug logging function
 function debugLog(...args) {
