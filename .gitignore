@@ -51,7 +51,6 @@ out/
 *.jpg
 *.jpeg
 *.png
-*.webp
 !example_face.jpg
 
 # API keys and secrets
