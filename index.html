@@ -206,7 +206,7 @@
 
     .app-container {
       display: flex;
-      height: calc(100vh - 48px);
+      height: calc(100vh - 48px - 44px); /* Subtract navbar and bottom toolbar height */
     }
 
     /* Sidebar */
@@ -301,6 +301,130 @@
       position: relative;
       background: #fafafa;
       overflow: hidden;
+    }
+
+    /* Bottom Toolbar */
+    .bottom-toolbar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 44px;
+      background: white;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.05);
+      z-index: 100;
+    }
+
+    .toolbar-left {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .toolbar-btn:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+
+    .toolbar-btn.active {
+      background: #6366f1;
+      color: white;
+      border-color: #6366f1;
+    }
+
+    /* Floating Console */
+    .floating-console {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      max-width: 90vw;
+      max-height: 300px;
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      display: none;
+      flex-direction: column;
+      z-index: 1000;
+    }
+
+    .floating-console.show {
+      display: flex;
+    }
+
+    .console-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+      user-select: none; /* Prevent text selection while dragging */
+    }
+
+    .console-title {
+      color: #e2e8f0;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .console-close {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .console-close:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    .console-output {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .console-line {
+      margin-bottom: 4px;
+      color: #86efac;
+      opacity: 0.9;
     }
 
     .canvas-area {
@@ -514,6 +638,7 @@
 
       .app-container {
         flex-direction: column;
+        height: calc(100vh - 44px - 44px); /* Account for bottom toolbar */
       }
 
       .sidebar {
@@ -529,6 +654,17 @@
 
       .main-content {
         min-height: 400px;
+      }
+
+      .bottom-toolbar {
+        height: 44px;
+        padding: 0 12px;
+      }
+
+      .floating-console {
+        width: 95vw;
+        bottom: 50px;
+        max-height: 250px;
       }
 
       .feature-grid {
@@ -641,24 +777,7 @@
       transform: translateX(20px);
     }
 
-    /* Console Output */
-    .console-output {
-      margin: 16px;
-      padding: 12px;
-      background: #1e293b;
-      color: #86efac;
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 11px;
-      max-height: 120px;
-      overflow-y: auto;
-    }
-
-    .console-line {
-      margin-bottom: 4px;
-      opacity: 0.9;
-    }
-  </style>
+    </style>
 </head>
 <body>
   <!-- Top Navbar -->
@@ -736,13 +855,7 @@
             </div>
           </div>
 
-          <div class="parameter-list">
-            <h4>Console</h4>
-            <div class="console-output" id="console">
-              <div class="console-line">Ready</div>
-            </div>
           </div>
-        </div>
 
         <!-- Code Tab -->
         <div class="tab-pane" id="code-tab">
@@ -882,6 +995,29 @@
         <!-- Face viewers will be dynamically added here -->
       </div>
     </div>
+
+    <!-- Bottom Toolbar -->
+    <div class="bottom-toolbar">
+      <div class="toolbar-left">
+        <span style="font-size: 12px; color: #6b7280;">Face Looker Viewer</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="toolbar-btn" id="consoleToggle">
+          <span>Console</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Floating Console -->
+    <div class="floating-console" id="floatingConsole">
+      <div class="console-header">
+        <div class="console-title">Console Output</div>
+        <button class="console-close" id="consoleClose">×</button>
+      </div>
+      <div class="console-output" id="console">
+        <div class="console-line">Ready</div>
+      </div>
+    </div>
   </div>
 
   <script type="module">
@@ -894,13 +1030,25 @@
       line.className = 'console-line';
       line.textContent = message;
       console.appendChild(line);
-      console.scrollTop = console.scrollHeight;
 
-      // Keep only last 10 messages
-      while (console.children.length > 10) {
+      // Auto-scroll to bottom if console is visible
+      if (floatingConsole.classList.contains('show')) {
+        console.scrollTop = console.scrollHeight;
+      }
+
+      // Keep only last 50 messages (increased for better debugging)
+      while (console.children.length > 50) {
         console.removeChild(console.firstChild);
       }
     }
+
+    // Console elements
+    const floatingConsole = document.getElementById('floatingConsole');
+
+    // Console dragging state
+    let isDraggingConsole = false;
+    let consoleDragStart = { x: 0, y: 0 };
+    let consoleStartPosition = { x: 0, y: 0 };
 
     // Canvas viewer management
     let viewers = [];
@@ -1236,8 +1384,128 @@
       updateSelectedInfo();
     });
 
-    
-    
+    // Console toggle functionality
+    const consoleToggle = document.getElementById('consoleToggle');
+    const consoleClose = document.getElementById('consoleClose');
+
+    function toggleConsole() {
+      const isVisible = floatingConsole.classList.contains('show');
+      if (isVisible) {
+        floatingConsole.classList.remove('show');
+        consoleToggle.classList.remove('active');
+      } else {
+        // Reset position to default when opening
+        floatingConsole.style.left = '';
+        floatingConsole.style.top = '';
+        floatingConsole.style.transform = 'translateX(-50%)';
+        floatingConsole.style.bottom = '';
+
+        floatingConsole.classList.add('show');
+        consoleToggle.classList.add('active');
+        // Focus the console output area and scroll to bottom
+        const consoleOutput = document.getElementById('console');
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+      }
+    }
+
+    consoleToggle.addEventListener('click', toggleConsole);
+    consoleClose.addEventListener('click', toggleConsole);
+
+    // Console dragging functionality
+    const consoleHeader = document.querySelector('.console-header');
+
+    function startConsoleDrag(e) {
+      isDraggingConsole = true;
+      consoleDragStart.x = e.clientX;
+      consoleDragStart.y = e.clientY;
+
+      // Get current position
+      const rect = floatingConsole.getBoundingClientRect();
+      const style = window.getComputedStyle(floatingConsole);
+      consoleStartPosition.x = rect.left;
+      consoleStartPosition.y = rect.top;
+
+      // Change cursor
+      consoleHeader.style.cursor = 'grabbing';
+      floatingConsole.style.cursor = 'grabbing';
+
+      e.preventDefault();
+    }
+
+    function dragConsole(e) {
+      if (!isDraggingConsole) return;
+
+      const deltaX = e.clientX - consoleDragStart.x;
+      const deltaY = e.clientY - consoleDragStart.y;
+
+      let newX = consoleStartPosition.x + deltaX;
+      let newY = consoleStartPosition.y + deltaY;
+
+      // Keep console within viewport bounds
+      const rect = floatingConsole.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+
+      newX = Math.max(0, Math.min(newX, maxX));
+      newY = Math.max(0, Math.min(newY, maxY));
+
+      // Apply new position
+      floatingConsole.style.left = `${newX}px`;
+      floatingConsole.style.top = `${newY}px`;
+      floatingConsole.style.transform = 'none'; // Remove centering transform
+      floatingConsole.style.bottom = 'auto'; // Remove bottom positioning
+    }
+
+    function stopConsoleDrag() {
+      if (!isDraggingConsole) return;
+
+      isDraggingConsole = false;
+      consoleHeader.style.cursor = 'grab';
+      floatingConsole.style.cursor = 'default';
+    }
+
+    // Add drag event listeners (mouse)
+    consoleHeader.addEventListener('mousedown', startConsoleDrag);
+    document.addEventListener('mousemove', dragConsole);
+    document.addEventListener('mouseup', stopConsoleDrag);
+
+    // Add drag event listeners (touch)
+    function startConsoleDragTouch(e) {
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      startConsoleDrag(mouseEvent);
+    }
+
+    function dragConsoleTouch(e) {
+      if (!isDraggingConsole) return;
+      e.preventDefault(); // Prevent scrolling while dragging
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      });
+      dragConsole(mouseEvent);
+    }
+
+    function stopConsoleDragTouch(e) {
+      const mouseEvent = new MouseEvent('mouseup', {});
+      stopConsoleDrag(mouseEvent);
+    }
+
+    consoleHeader.addEventListener('touchstart', startConsoleDragTouch, { passive: false });
+    document.addEventListener('touchmove', dragConsoleTouch, { passive: false });
+    document.addEventListener('touchend', stopConsoleDragTouch);
+
+    // Close console with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && floatingConsole.classList.contains('show')) {
+        toggleConsole();
+      }
+    });
+
     // Initialize: detect face sets and load initial viewer
     detectFaceSets().then(() => {
       resetViewers();
