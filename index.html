@@ -1341,7 +1341,7 @@
   </div>
 
   <script type="module">
-    import { FaceLookerViewer } from './FaceLookerViewer.js';
+    import { FaceLooker } from './FaceLooker.js';
 
     // Console output handler
     function addConsoleMessage(message) {
@@ -1558,7 +1558,7 @@
       const displayName = selectedFaceSetInfo ? selectedFaceSetInfo.displayName : selectedFaceSet;
       addConsoleMessage(`Adding viewer ${viewerId} from face set ${displayName} (${randomSize}) - Debug: ${debug}, Labels: ${showLabel}`);
 
-      const viewer = new FaceLookerViewer({
+      const viewer = new FaceLooker({
         faces: selectedFaceSet, // Use the full path from registry
         width: config.width,
         height: config.height,

@@ -1,9 +1,9 @@
 /**
- * FaceLookerViewer - Interactive face tracking module
+ * FaceLooker - Interactive face tracking module
  * A modern ES6 module for displaying interactive faces that follow cursor movement
  */
 
-export class FaceLookerViewer {
+export class FaceLooker {
   constructor(options = {}) {
     // Configuration
     this.config = {
