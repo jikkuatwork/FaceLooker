@@ -44,6 +44,7 @@ export class FaceLookerViewer {
     this.dragStart = { x: 0, y: 0 };
     this.containerStart = { x: 0, y: 0 };
     this.sizeStart = { width: 0, height: 0 };
+    this.baseZIndex = 1;
 
     // Progress elements
     this.progressContainer = null;
@@ -71,7 +72,8 @@ export class FaceLookerViewer {
       background: #f0f0f0;
       border-radius: ${this.config.cornerRadius}px;
       overflow: hidden;
-      cursor: default;
+      cursor: ${this.config.draggable ? 'move' : 'default'};
+      z-index: ${this.baseZIndex};
     `;
 
     // Add selection capability
@@ -469,48 +471,15 @@ export class FaceLookerViewer {
   }
 
   addDragHandlers() {
-    const dragHandle = document.createElement('div');
-    dragHandle.className = 'drag-handle';
-    dragHandle.style.cssText = `
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      width: 20px;
-      height: 20px;
-      background: rgba(0, 0, 0, 0.5);
-      border-radius: 4px;
-      cursor: move;
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    `;
-
-    // Update container cursor on drag handle hover
-    dragHandle.addEventListener('mouseenter', () => {
-      this.container.style.cursor = 'move';
-    });
-
-    dragHandle.addEventListener('mouseleave', () => {
-      this.container.style.cursor = 'default';
-    });
-
-    // Add drag icon dots
-    dragHandle.innerHTML = `
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
-        <div style="width: 3px; height: 3px; background: white; border-radius: 50%;"></div>
-        <div style="width: 3px; height: 3px; background: white; border-radius: 50%;"></div>
-        <div style="width: 3px; height: 3px; background: white; border-radius: 50%;"></div>
-        <div style="width: 3px; height: 3px; background: white; border-radius: 50%;"></div>
-      </div>
-    `;
-
-    this.container.appendChild(dragHandle);
-
     let offsetX = 0;
     let offsetY = 0;
 
-    const handleMouseDown = (e) => {
+    this.dragMouseDown = (e) => {
+      // Don't drag if clicking on interactive elements
+      if (e.target.closest('.resize-handle') || e.target.closest('button') || e.target.closest('input')) {
+        return;
+      }
+
       e.preventDefault();
       this.isDragging = true;
 
@@ -518,13 +487,14 @@ export class FaceLookerViewer {
       offsetX = e.clientX - rect.left;
       offsetY = e.clientY - rect.top;
 
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', this.dragMouseMove);
+      document.addEventListener('mouseup', this.dragMouseUp);
 
       this.container.style.zIndex = '9999';
+      this.container.style.cursor = 'grabbing';
     };
 
-    const handleMouseMove = (e) => {
+    this.dragMouseMove = (e) => {
       if (!this.isDragging) return;
 
       const x = e.clientX - offsetX;
@@ -535,14 +505,25 @@ export class FaceLookerViewer {
       this.container.style.top = `${y}px`;
     };
 
-    const handleMouseUp = () => {
+    this.dragMouseUp = () => {
       this.isDragging = false;
       this.container.style.zIndex = '';
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      this.container.style.cursor = this.config.draggable ? 'move' : 'default';
+      document.removeEventListener('mousemove', this.dragMouseMove);
+      document.removeEventListener('mouseup', this.dragMouseUp);
     };
 
-    dragHandle.addEventListener('mousedown', handleMouseDown);
+    this.dragMouseEnter = () => {
+      if (this.config.draggable && !this.isDragging) {
+        this.container.style.cursor = 'move';
+      }
+    };
+
+    // Add event listeners to the entire container
+    this.container.addEventListener('mousedown', this.dragMouseDown);
+    this.container.addEventListener('mouseenter', this.dragMouseEnter);
+
+    this.isDraggingEnabled = true;
   }
 
   addResizeHandlers() {
@@ -558,6 +539,7 @@ export class FaceLookerViewer {
       cursor: nwse-resize;
       z-index: 1000;
       border-radius: 4px 0 ${this.config.cornerRadius}px 0;
+      display: none; // Hidden by default, shown only when selected
     `;
 
     // Add resize icon
@@ -574,7 +556,7 @@ export class FaceLookerViewer {
     let startX = 0;
     let startY = 0;
 
-    const handleMouseDown = (e) => {
+    this.resizeMouseDown = (e) => {
       e.preventDefault();
       this.isResizing = true;
 
@@ -583,13 +565,13 @@ export class FaceLookerViewer {
       startX = e.clientX;
       startY = e.clientY;
 
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', this.resizeMouseMove);
+      document.addEventListener('mouseup', this.resizeMouseUp);
 
       this.container.style.zIndex = '9999';
     };
 
-    const handleMouseMove = (e) => {
+    this.resizeMouseMove = (e) => {
       if (!this.isResizing) return;
 
       // Calculate the delta (use the larger of x or y delta to maintain 1:1 ratio)
@@ -607,14 +589,15 @@ export class FaceLookerViewer {
       this.config.height = newSize;
     };
 
-    const handleMouseUp = () => {
+    this.resizeMouseUp = () => {
       this.isResizing = false;
       this.container.style.zIndex = '';
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', this.resizeMouseMove);
+      document.removeEventListener('mouseup', this.resizeMouseUp);
     };
 
-    resizeHandle.addEventListener('mousedown', handleMouseDown);
+    resizeHandle.addEventListener('mousedown', this.resizeMouseDown);
+    this.resizeHandle = resizeHandle; // Store reference
   }
 
   // Public API methods
@@ -646,22 +629,35 @@ export class FaceLookerViewer {
 
   select() {
     console.log('🎯 select() called for viewer:', this.id);
-    console.log('🔧 Config object:', this.config);
-    console.log('📞 onSelect exists:', !!this.config.onSelect);
-    console.log('📞 onSelect type:', typeof this.config.onSelect);
 
-    // Remove selection from all other viewers
+    // Remove selection from all other viewers and reset their z-index
     document.querySelectorAll('.face-looker-viewer').forEach(el => {
       el.classList.remove('selected');
       el.style.outline = '';
+      // Hide resize handle on other viewers
+      const otherResizeHandle = el.querySelector('.resize-handle');
+      if (otherResizeHandle) {
+        otherResizeHandle.style.display = 'none';
+      }
+      // Reset z-index to base level
+      el.style.zIndex = '1';
     });
+
+    // Bring this viewer to front with highest z-index
+    const highestZIndex = this.getHighestZIndex() + 1;
+    this.container.style.zIndex = highestZIndex;
 
     // Select this viewer
     this.container.classList.add('selected');
     this.container.style.outline = '2px solid #6366f1';
     this.container.style.outlineOffset = '2px';
 
-    console.log('✅ Viewer selected, triggering callbacks...');
+    // Show resize handle when selected
+    if (this.resizeHandle) {
+      this.resizeHandle.style.display = 'block';
+    }
+
+    console.log(`✅ Viewer #${this.id} selected and brought to front with z-index: ${highestZIndex}`);
 
     // Trigger selection callback
     if (this.config.onSelect && typeof this.config.onSelect === 'function') {
@@ -687,6 +683,24 @@ export class FaceLookerViewer {
   deselect() {
     this.container.classList.remove('selected');
     this.container.style.outline = '';
+    // Hide resize handle when deselected
+    if (this.resizeHandle) {
+      this.resizeHandle.style.display = 'none';
+    }
+  }
+
+  getHighestZIndex() {
+    const viewers = document.querySelectorAll('.face-looker-viewer');
+    let highestZIndex = 1;
+
+    viewers.forEach(viewer => {
+      const zIndex = parseInt(window.getComputedStyle(viewer).zIndex) || 1;
+      if (zIndex > highestZIndex) {
+        highestZIndex = zIndex;
+      }
+    });
+
+    return highestZIndex;
   }
 
   updateConfig(newConfig) {
@@ -712,11 +726,16 @@ export class FaceLookerViewer {
 
     // Handle drag and resize handlers
     if ('draggable' in newConfig) {
-      if (newConfig.draggable && !this.container.querySelector('.drag-handle')) {
+      if (newConfig.draggable && !this.isDraggingEnabled) {
         this.addDragHandlers();
+        this.isDraggingEnabled = true;
+        this.container.style.cursor = 'move';
       } else if (!newConfig.draggable) {
-        const dragHandle = this.container.querySelector('.drag-handle');
-        if (dragHandle) dragHandle.remove();
+        // Remove drag listeners
+        this.container.removeEventListener('mousedown', this.dragMouseDown);
+        this.container.removeEventListener('mouseenter', this.dragMouseEnter);
+        this.isDraggingEnabled = false;
+        this.container.style.cursor = 'default';
       }
     }
 

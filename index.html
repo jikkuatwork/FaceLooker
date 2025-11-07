@@ -18,9 +18,56 @@
       background: #fafafa;
     }
 
+    /* Navbar */
+    .navbar {
+      height: 48px;
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      z-index: 100;
+    }
+
+    .navbar-brand h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .navbar-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: #f9fafb;
+      border-color: #9ca3af;
+    }
+
+    .nav-icon {
+      font-size: 14px;
+    }
+
     .app-container {
       display: flex;
-      height: 100vh;
+      height: calc(100vh - 48px);
     }
 
     /* Sidebar */
@@ -34,21 +81,17 @@
     }
 
     .sidebar-header {
-      padding: 24px;
+      padding: 16px;
       border-bottom: 1px solid #e5e7eb;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: #f9fafb;
     }
 
     .sidebar-header h1 {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-
-    .sidebar-header p {
       font-size: 14px;
-      opacity: 0.9;
+      font-weight: 600;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     /* Tabs */
@@ -312,6 +355,24 @@
 
     /* Responsive Design */
     @media (max-width: 768px) {
+      .navbar {
+        height: 44px;
+        padding: 0 12px;
+      }
+
+      .navbar-brand h1 {
+        font-size: 14px;
+      }
+
+      .nav-btn {
+        padding: 4px 8px;
+        font-size: 12px;
+      }
+
+      .nav-btn span:not(.nav-icon) {
+        display: none;
+      }
+
       .app-container {
         flex-direction: column;
       }
@@ -336,48 +397,114 @@
       }
     }
 
-    /* Selection Panel Header */
-    .selection-header {
-      background: linear-gradient(135deg, #4f46e5, #6366f1);
+    /* Minimal Selection Panel */
+    .selection-panel {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 16px;
-      color: white;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      margin: 16px;
+      padding: 12px 16px;
     }
 
-    .selection-header.selected {
-      background: linear-gradient(135deg, #059669, #10b981);
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
-    }
-
-    .selection-status {
+    .selection-row {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 14px;
     }
 
-    .selection-status-icon {
-      font-size: 16px;
-      transition: transform 0.2s ease;
+    .selection-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .selection-header.selected .selection-status-icon {
-      transform: scale(1.1);
+    .selection-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
     }
 
-    .selection-details {
-      font-size: 12px;
-      opacity: 0.9;
-      line-height: 1.4;
+    /* Properties Section */
+    .properties-section {
+      padding: 0 16px;
+    }
+
+    .property-group {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .property-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .property-row:last-child {
+      border-bottom: none;
+    }
+
+    .property-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    /* Toggle Switches */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      transition: 0.2s;
+      border-radius: 20px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.2s;
+      border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+      background-color: #6366f1;
+    }
+
+    input:checked + .toggle-slider:before {
+      transform: translateX(20px);
     }
 
     /* Console Output */
     .console-output {
-      margin-top: 16px;
+      margin: 16px;
       padding: 12px;
       background: #1e293b;
       color: #86efac;
@@ -395,16 +522,37 @@
   </style>
 </head>
 <body>
+  <!-- Top Navbar -->
+  <div class="navbar">
+    <div class="navbar-brand">
+      <h1>Face Looker Viewer</h1>
+    </div>
+
+    <div class="navbar-controls">
+      <button class="nav-btn" id="addViewerBtn">
+        <span class="nav-icon">+</span>
+        Add Viewer
+      </button>
+      <button class="nav-btn" id="clearCanvasBtn">
+        <span class="nav-icon">🗑️</span>
+        Clear
+      </button>
+      <button class="nav-btn" id="resetBtn">
+        <span class="nav-icon">↺</span>
+        Reset
+      </button>
+    </div>
+  </div>
+
   <div class="app-container">
     <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <h1>Face Looker Viewer</h1>
-        <p>ES6 Module • Interactive Face Tracking</p>
+        <h1>Properties</h1>
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="demo">Demo</button>
+        <button class="tab active" data-tab="demo">Design</button>
         <button class="tab" data-tab="code">Code</button>
         <button class="tab" data-tab="about">About</button>
       </div>
@@ -412,65 +560,38 @@
       <div class="tab-content">
         <!-- Demo Tab -->
         <div class="tab-pane active" id="demo-tab">
-          <!-- Selection Panel Header -->
-          <div class="selection-header" id="selectionHeader">
-            <div class="selection-status">
-              <span id="selectionStatusIcon">🔘</span>
-              <span id="selectionStatusText">No Selection</span>
-            </div>
-            <div class="selection-details" id="selectionDetails">
-              Click on a viewer to select it
+          <!-- Minimal Selection Panel -->
+          <div class="selection-panel" id="selectionPanel">
+            <div class="selection-row">
+              <span class="selection-label">Layer</span>
+              <span id="selectionName" class="selection-value">No Selection</span>
             </div>
           </div>
 
-          <div class="demo-controls">
-            <h4>Demo Controls</h4>
-            <div class="control-group">
-              <label>Size:</label>
-              <select id="sizeSelect">
-                <option value="small">Small (240px)</option>
-                <option value="medium" selected>Medium (360px)</option>
-                <option value="large">Large (480px)</option>
-              </select>
-            </div>
-            <div class="control-group">
-              <label>Debug:</label>
-              <input type="checkbox" id="debugToggle">
-            </div>
-            <div class="control-group">
-              <label>Show Label:</label>
-              <input type="checkbox" id="labelToggle">
-            </div>
-            <div class="control-group">
-              <label>Draggable:</label>
-              <input type="checkbox" id="dragToggle">
-            </div>
-            <div class="control-group">
-              <label>Resizable:</label>
-              <input type="checkbox" id="resizeToggle">
-            </div>
-            <div class="control-group">
-              <button class="btn" id="addViewerBtn">Add Viewer</button>
-            </div>
-            <div class="control-group">
-              <button class="btn" id="clearCanvasBtn">Clear Canvas</button>
-            </div>
-            <div class="control-group">
-              <button class="btn" id="resetBtn">Reset Viewers</button>
+          <!-- Properties Panel -->
+          <div class="properties-section">
+            <div class="property-group">
+              <div class="property-row">
+                <span class="property-label">Debug</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="debugToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div class="property-row">
+                <span class="property-label">Show Label</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="labelToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
           </div>
 
           <div class="parameter-list">
-            <h4>Selected Viewer</h4>
-            <div id="selectedInfo" style="color: #6b7280; font-size: 13px;">
-              Click on a viewer to select it
-            </div>
-          </div>
-
-          <div class="parameter-list">
-            <h4>Console Output</h4>
+            <h4>Console</h4>
             <div class="console-output" id="console">
-              <div class="console-line">Initializing face viewers...</div>
+              <div class="console-line">Ready</div>
             </div>
           </div>
         </div>
@@ -648,11 +769,10 @@
     }
 
     function addViewer(x = null, y = null) {
-      const size = document.getElementById('sizeSelect').value;
+      const size = 'medium'; // Default size since we removed the dropdown
       const debug = document.getElementById('debugToggle').checked;
       const showLabel = document.getElementById('labelToggle').checked;
-      const draggable = document.getElementById('dragToggle').checked;
-      const resizable = document.getElementById('resizeToggle').checked;
+      // draggable and resizable are always true now
 
       const config = getViewerConfig(size);
       const canvas = document.getElementById('canvas');
@@ -664,7 +784,7 @@
 
       addConsoleMessage(`Adding viewer #${viewerIdCounter + 1}...`);
 
-      console.log('🏗️ Creating new viewer with config:', { debug, showLabel, draggable, resizable });
+      console.log('🏗️ Creating new viewer with config:', { debug, showLabel });
 
       const viewer = new FaceLookerViewer({
         faces: './faces/01/',
@@ -673,8 +793,8 @@
         cornerRadius: 8,
         showDebug: debug,
         showLabel: showLabel,
-        draggable: draggable,
-        resizable: resizable,
+        draggable: true, // Always draggable
+        resizable: true, // Always resizable (but only shown when selected)
         downloadImagesAutomatically: false,
         onSelect: (selectedViewerInstance) => {
           console.log('📞 onSelect callback called with:', selectedViewerInstance);
@@ -721,72 +841,24 @@
 
     function resetViewers() {
       clearCanvas();
-      // Add two initial viewers
-      addViewer(100, 100);
-      addViewer(500, 100);
+      // Add single initial viewer centered
+      addViewer(null, null); // This will center it automatically
     }
 
     function updateSelectedInfo() {
-      const selectedInfo = document.getElementById('selectedInfo');
-      const selectionHeader = document.getElementById('selectionHeader');
-      const selectionStatusIcon = document.getElementById('selectionStatusIcon');
-      const selectionStatusText = document.getElementById('selectionStatusText');
-      const selectionDetails = document.getElementById('selectionDetails');
+      const selectionName = document.getElementById('selectionName');
 
       if (selectedViewer) {
-        // Update selection header (Figma-style)
-        selectionHeader.classList.add('selected');
-        selectionStatusIcon.textContent = '👁️';
-        selectionStatusText.textContent = `Viewer #${selectedViewer.id} Selected`;
-
         // Update sidebar controls to match selected viewer's state
         document.getElementById('debugToggle').checked = selectedViewer.config.showDebug;
         document.getElementById('labelToggle').checked = selectedViewer.config.showLabel;
         document.getElementById('dragToggle').checked = selectedViewer.config.draggable;
         document.getElementById('resizeToggle').checked = selectedViewer.config.resizable;
 
-        // Update size selector if it matches known sizes
-        const width = selectedViewer.config.width;
-        const height = selectedViewer.config.height;
-        let sizeMatch = '';
-        if (width === 240 && height === 240) sizeMatch = 'small';
-        else if (width === 360 && height === 360) sizeMatch = 'medium';
-        else if (width === 480 && height === 480) sizeMatch = 'large';
-
-        if (sizeMatch) {
-          document.getElementById('sizeSelect').value = sizeMatch;
-        }
-
-        // Update selection details
-        selectionDetails.innerHTML = `
-          <div>📐 Size: ${selectedViewer.config.width}×${selectedViewer.config.height}px</div>
-          <div>🐛 Debug: ${selectedViewer.config.showDebug ? 'On' : 'Off'}</div>
-          <div>🏷️ Label: ${selectedViewer.config.showLabel ? 'On' : 'Off'}</div>
-          <div>✋ Draggable: ${selectedViewer.config.draggable ? 'Yes' : 'No'}</div>
-          <div>📏 Resizable: ${selectedViewer.config.resizable ? 'Yes' : 'No'}</div>
-        `;
-
-        // Update old info display too
-        selectedInfo.innerHTML = `
-          <div style="margin-bottom: 8px;">
-            <strong>Viewer #${selectedViewer.id}</strong>
-          </div>
-          <div style="font-size: 12px; line-height: 1.4;">
-            <div>Size: ${selectedViewer.config.width}×${selectedViewer.config.height}px</div>
-            <div>Debug: ${selectedViewer.config.showDebug ? 'On' : 'Off'}</div>
-            <div>Label: ${selectedViewer.config.showLabel ? 'On' : 'Off'}</div>
-            <div>Draggable: ${selectedViewer.config.draggable ? 'Yes' : 'No'}</div>
-            <div>Resizable: ${selectedViewer.config.resizable ? 'Yes' : 'No'}</div>
-          </div>
-        `;
+        // Simple selection display: Index + Name
+        selectionName.textContent = `#${selectedViewer.id} Mammootty`;
       } else {
-        // Reset selection header
-        selectionHeader.classList.remove('selected');
-        selectionStatusIcon.textContent = '🔘';
-        selectionStatusText.textContent = 'No Selection';
-        selectionDetails.textContent = 'Click on a viewer to select it';
-
-        selectedInfo.textContent = 'Click on a viewer to select it';
+        selectionName.textContent = 'No Selection';
       }
     }
 
@@ -801,16 +873,12 @@
 
       const debug = document.getElementById('debugToggle').checked;
       const showLabel = document.getElementById('labelToggle').checked;
-      const draggable = document.getElementById('dragToggle').checked;
-      const resizable = document.getElementById('resizeToggle').checked;
 
-      console.log('🎛️ Control values:', { debug, showLabel, draggable, resizable });
+      console.log('🎛️ Control values:', { debug, showLabel });
 
       selectedViewer.updateConfig({
         showDebug: debug,
-        showLabel: showLabel,
-        draggable: draggable,
-        resizable: resizable
+        showLabel: showLabel
       });
 
       updateSelectedInfo(); // Refresh display with new values
@@ -831,7 +899,7 @@
       });
     });
 
-    // Demo controls
+    // Demo controls (now in navbar)
     document.getElementById('addViewerBtn').addEventListener('click', () => {
       addViewer();
     });
@@ -840,7 +908,7 @@
     document.getElementById('resetBtn').addEventListener('click', resetViewers);
 
     // Update selected viewer when controls change
-    ['debugToggle', 'labelToggle', 'dragToggle', 'resizeToggle'].forEach(id => {
+    ['debugToggle', 'labelToggle'].forEach(id => {
       document.getElementById(id).addEventListener('change', updateSelectedViewer);
     });
 
@@ -863,16 +931,9 @@
       updateSelectedInfo();
     });
 
-    // Double-click on canvas to add viewer at that position
-    document.getElementById('canvas').addEventListener('dblclick', (e) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      addViewer(x - 180, y - 180); // Center the viewer on click position
-    });
-
     
-    // Initial load - add two viewers
+    
+    // Initial load - add single viewer
     resetViewers();
 
     // Make globally accessible
