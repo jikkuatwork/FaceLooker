@@ -28,6 +28,53 @@ function updateDebug(debugEl, x, y, filename) {
   debugEl.innerHTML = `Mouse: (${Math.round(x)}, ${Math.round(y)})<br/>Image: ${filename}`;
 }
 
+function generateImageFilenames() {
+  const filenames = [];
+  for (let px = P_MIN; px <= P_MAX; px += STEP) {
+    for (let py = P_MIN; py <= P_MAX; py += STEP) {
+      filenames.push(gridToFilename(px, py));
+    }
+  }
+  return filenames;
+}
+
+function preloadImages(basePath, filenames, onProgress, onComplete) {
+  const totalImages = filenames.length;
+  let loadedCount = 0;
+
+  const imageCache = new Map();
+
+  // Start loading all images
+  filenames.forEach(filename => {
+    const img = new Image();
+    img.onload = () => {
+      loadedCount++;
+      imageCache.set(filename, img);
+
+      // Update progress
+      const progress = (loadedCount / totalImages) * 100;
+      onProgress(progress, loadedCount, totalImages);
+
+      // Check if all images are loaded
+      if (loadedCount === totalImages) {
+        onComplete(imageCache);
+      }
+    };
+
+    img.onerror = () => {
+      loadedCount++;
+      const progress = (loadedCount / totalImages) * 100;
+      onProgress(progress, loadedCount, totalImages);
+
+      if (loadedCount === totalImages) {
+        onComplete(imageCache);
+      }
+    };
+
+    img.src = basePath + filename;
+  });
+}
+
 function initializeFaceTracker(container) {
   const basePath = container.dataset.basePath || '/faces/';
   const showDebug = String(container.dataset.debug || 'false') === 'true';
@@ -44,7 +91,15 @@ function initializeFaceTracker(container) {
     container.appendChild(debugEl);
   }
 
+  let imageCache = null;
+
+  function setImageCache(cache) {
+    imageCache = cache;
+  }
+
   function setFromClient(clientX, clientY) {
+    if (!imageCache) return; // Don't work until images are loaded
+
     const rect = container.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -59,8 +114,15 @@ function initializeFaceTracker(container) {
     const py = quantizeToGrid(clampedY);
 
     const filename = gridToFilename(px, py);
-    const imagePath = `${basePath}${filename}`;
-    img.src = imagePath;
+    const cachedImg = imageCache.get(filename);
+
+    if (cachedImg) {
+      img.src = cachedImg.src;
+    } else {
+      // Fallback to direct loading if not in cache
+      img.src = `${basePath}${filename}`;
+    }
+
     updateDebug(debugEl, clientX - rect.left, clientY - rect.top, filename);
   }
 
@@ -75,15 +137,59 @@ function initializeFaceTracker(container) {
     }
   }
 
-  // Track pointer anywhere on the page
-  window.addEventListener('mousemove', handleMouseMove);
-  window.addEventListener('touchmove', handleTouchMove, { passive: true });
+  function startTracker() {
+    // Add event listeners only after loading is complete
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
 
-  // Initialize at center
-  const rect = container.getBoundingClientRect();
-  setFromClient(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    // Initialize at center
+    const rect = container.getBoundingClientRect();
+    setFromClient(rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+
+  return { startTracker, setImageCache };
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.face-tracker').forEach((el) => initializeFaceTracker(el));
+  const progressContainer = document.getElementById('progressContainer');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const previewImage = document.getElementById('previewImage');
+  const mainContent = document.getElementById('mainContent');
+  const faceTracker = document.getElementById('face');
+
+  const basePath = faceTracker.dataset.basePath || '/faces/';
+
+  // Show center image as preview
+  const centerFilename = gridToFilename(0, 0);
+  previewImage.src = basePath + centerFilename;
+
+  // Generate all required image filenames
+  const imageFilenames = generateImageFilenames();
+
+  // Start preloading images
+  preloadImages(
+    basePath,
+    imageFilenames,
+    (progress, loaded, total) => {
+      // Update progress bar
+      progressFill.style.width = `${progress}%`;
+      progressText.textContent = `Loading face images... ${loaded}/${total}`;
+    },
+    (imageCache) => {
+      // All images loaded, activate the application
+      progressText.textContent = 'Ready!';
+
+      // Hide progress screen and show main content
+      setTimeout(() => {
+        progressContainer.classList.add('hidden');
+        mainContent.classList.add('active');
+
+        // Initialize face tracker with cached images
+        const tracker = initializeFaceTracker(faceTracker);
+        tracker.setImageCache(imageCache);
+        tracker.startTracker();
+      }, 300);
+    }
+  );
 });

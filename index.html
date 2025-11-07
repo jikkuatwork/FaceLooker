@@ -10,12 +10,88 @@
     body { display: flex; align-items: center; justify-content: center; background: #fafafa; }
     .container { width: 360px; height: 360px; }
     .header { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); font-family: ui-sans-serif, system-ui, Arial, sans-serif; color: #333; }
+
+    /* Progress Bar Styles */
+    .progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.3s ease-out;
+    }
+
+    .progress-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .preview-image {
+      width: 360px;
+      height: 360px;
+      border-radius: 8px;
+      margin-bottom: 32px;
+      background: #f0f0f0;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      object-fit: contain;
+    }
+
+    .progress-bar {
+      width: 280px;
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      width: 0%;
+      transition: width 0.3s ease-out;
+      border-radius: 2px;
+    }
+
+    .progress-text {
+      font-family: ui-sans-serif, system-ui, Arial, sans-serif;
+      font-size: 14px;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .main-content {
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+    }
+
+    .main-content.active {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
-  <div class="header">Move your cursor around the face</div>
-  <div class="container">
-    <div class="face-tracker" id="face" data-base-path="faces/" data-debug="false"></div>
+  <!-- Progress Loading Screen -->
+  <div class="progress-container" id="progressContainer">
+    <img class="preview-image" id="previewImage" src="" alt="Loading face...">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-text" id="progressText">Loading face images...</div>
+  </div>
+
+  <!-- Main Application (Initially Hidden) -->
+  <div class="main-content" id="mainContent">
+    <div class="header">Move your cursor around the face</div>
+    <div class="container">
+      <div class="face-tracker" id="face" data-base-path="faces/" data-debug="false"></div>
+    </div>
   </div>
 
   <script src="./face-tracker.js" defer></script>
