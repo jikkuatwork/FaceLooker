@@ -1,0 +1,14 @@
+{
+  "name": "Mammootty",
+  "subtitle": "Actor",
+  "description": "Generated face images for interactive gaze tracking",
+  "version": "1.0",
+  "gridSize": {
+    "min": -15,
+    "max": 15,
+    "step": 3,
+    "imageSize": 256
+  },
+  "generated": "2024-11-07",
+  "totalImages": 121
+}

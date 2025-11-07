@@ -3,97 +3,705 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Face Looker (Vanilla)</title>
-  <link rel="stylesheet" href="./FaceTracker.css">
+  <title>Face Looker Viewer (ES6 Module)</title>
   <style>
-    html, body { height: 100%; margin: 0; }
-    body { display: flex; align-items: center; justify-content: center; background: #fafafa; }
-    .container { width: 360px; height: 360px; }
-    .header { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); font-family: ui-sans-serif, system-ui, Arial, sans-serif; color: #333; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    /* Progress Bar Styles */
-    .progress-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+    html, body {
+      height: 100vh;
+      overflow: hidden;
+      font-family: ui-sans-serif, system-ui, Arial, sans-serif;
       background: #fafafa;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 320px;
+      background: white;
+      border-right: 1px solid #e5e7eb;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      transition: opacity 0.3s ease-out;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
     }
 
-    .progress-container.hidden {
-      opacity: 0;
-      pointer-events: none;
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid #e5e7eb;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
     }
 
-    .preview-image {
-      width: 360px;
-      height: 360px;
-      border-radius: 8px;
-      margin-bottom: 32px;
-      background: #f0f0f0;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      object-fit: contain;
+    .sidebar-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
     }
 
-    .progress-bar {
-      width: 280px;
-      height: 4px;
-      background: #e5e7eb;
-      border-radius: 2px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6);
-      width: 0%;
-      transition: width 0.3s ease-out;
-      border-radius: 2px;
-    }
-
-    .progress-text {
-      font-family: ui-sans-serif, system-ui, Arial, sans-serif;
+    .sidebar-header p {
       font-size: 14px;
-      color: #6b7280;
+      opacity: 0.9;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 16px 8px;
       text-align: center;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+      transition: all 0.2s ease;
+      position: relative;
     }
 
+    .tab:hover {
+      color: #374151;
+      background: rgba(99, 102, 241, 0.05);
+    }
+
+    .tab.active {
+      color: #6366f1;
+      background: white;
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #6366f1;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Main Content (Figma-style Canvas) */
     .main-content {
-      opacity: 0;
-      transition: opacity 0.3s ease-in;
+      flex: 1;
+      position: relative;
+      background: #fafafa;
+      overflow: hidden;
     }
 
-    .main-content.active {
-      opacity: 1;
+    .canvas-area {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+      background-size: 20px 20px;
+      background-position: -1px -1px;
+    }
+
+    .demo-controls {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+    }
+
+    .demo-controls h4 {
+      margin-bottom: 12px;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .control-group label {
+      font-size: 13px;
+      color: #6b7280;
+      min-width: 80px;
+    }
+
+    .control-group input,
+    .control-group select {
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      background: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn:hover {
+      background: #4f46e5;
+    }
+
+    /* Code Tab Styles */
+    .code-section {
+      margin-bottom: 32px;
+    }
+
+    .code-section h3 {
+      margin-bottom: 12px;
+      color: #374151;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .code-block {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .code-block .comment {
+      color: #64748b;
+    }
+
+    .code-block .keyword {
+      color: #c084fc;
+    }
+
+    .code-block .string {
+      color: #86efac;
+    }
+
+    .code-block .function {
+      color: #67e8f9;
+    }
+
+    .parameter-list {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .parameter-list h4 {
+      margin-bottom: 12px;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .parameter {
+      margin-bottom: 8px;
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .parameter::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: #6366f1;
+    }
+
+    .parameter strong {
+      color: #374151;
+      font-weight: 600;
+    }
+
+    .parameter code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #374151;
+    }
+
+    /* About Tab Styles */
+    .about-section {
+      margin-bottom: 32px;
+    }
+
+    .about-section h3 {
+      margin-bottom: 16px;
+      color: #374151;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .about-section p {
+      margin-bottom: 12px;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .feature-card {
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+
+    .feature-card h4 {
+      margin-bottom: 8px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .feature-card p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .app-container {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .tab-content {
+        max-height: 300px;
+      }
+
+      .main-content {
+        min-height: 400px;
+      }
+
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Console Output */
+    .console-output {
+      margin-top: 16px;
+      padding: 12px;
+      background: #1e293b;
+      color: #86efac;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 11px;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .console-line {
+      margin-bottom: 4px;
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
-  <!-- Progress Loading Screen -->
-  <div class="progress-container" id="progressContainer">
-    <img class="preview-image" id="previewImage" src="" alt="Loading face...">
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1>Face Looker Viewer</h1>
+        <p>ES6 Module • Interactive Face Tracking</p>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="demo">Demo</button>
+        <button class="tab" data-tab="code">Code</button>
+        <button class="tab" data-tab="about">About</button>
+      </div>
+
+      <div class="tab-content">
+        <!-- Demo Tab -->
+        <div class="tab-pane active" id="demo-tab">
+          <div class="demo-controls">
+            <h4>Demo Controls</h4>
+            <div class="control-group">
+              <label>Size:</label>
+              <select id="sizeSelect">
+                <option value="small">Small (240px)</option>
+                <option value="medium" selected>Medium (360px)</option>
+                <option value="large">Large (480px)</option>
+              </select>
+            </div>
+            <div class="control-group">
+              <label>Debug:</label>
+              <input type="checkbox" id="debugToggle">
+            </div>
+            <div class="control-group">
+              <label>Show Label:</label>
+              <input type="checkbox" id="labelToggle">
+            </div>
+            <div class="control-group">
+              <label>Draggable:</label>
+              <input type="checkbox" id="dragToggle">
+            </div>
+            <div class="control-group">
+              <label>Resizable:</label>
+              <input type="checkbox" id="resizeToggle">
+            </div>
+            <div class="control-group">
+              <button class="btn" id="addViewerBtn">Add Viewer</button>
+            </div>
+            <div class="control-group">
+              <button class="btn" id="clearCanvasBtn">Clear Canvas</button>
+            </div>
+            <div class="control-group">
+              <button class="btn" id="resetBtn">Reset Viewers</button>
+            </div>
+          </div>
+
+          <div class="parameter-list">
+            <h4>Console Output</h4>
+            <div class="console-output" id="console">
+              <div class="console-line">Initializing face viewers...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Code Tab -->
+        <div class="tab-pane" id="code-tab">
+          <div class="code-section">
+            <h3>Installation</h3>
+            <div class="code-block">
+              <span class="comment">// Import the ES6 module</span><br>
+              <span class="keyword">import</span> { FaceLookerViewer } <span class="keyword">from</span> <span class="string">'./FaceLookerViewer.js'</span>;
+            </div>
+          </div>
+
+          <div class="code-section">
+            <h3>Basic Usage</h3>
+            <div class="code-block">
+              <span class="keyword">const</span> <span class="function">viewer</span> = <span class="keyword">new</span> <span class="function">FaceLookerViewer</span>({<br>
+              &nbsp;&nbsp;<span class="string">faces</span>: <span class="string">'./faces/01/'</span>,<br>
+              &nbsp;&nbsp;<span class="string">width</span>: <span class="number">360</span>,<br>
+              &nbsp;&nbsp;<span class="string">height</span>: <span class="number">360</span>,<br>
+              &nbsp;&nbsp;<span class="string">cornerRadius</span>: <span class="number">8</span><br>
+              });<br>
+              <br>
+              <span class="function">document</span>.<span class="function">getElementById</span>(<span class="string">'container'</span>)<br>
+              &nbsp;&nbsp;.<span class="function">appendChild</span>(<span class="function">viewer</span>.<span class="function">getElement</span>());<br>
+            </div>
+          </div>
+
+          <div class="parameter-list">
+            <h4>Configuration Options</h4>
+            <div class="parameter"><strong>faces</strong> <code>string</code> - Path to face images folder</div>
+            <div class="parameter"><strong>width</strong> <code>number</code> - Container width in pixels (default: 360)</div>
+            <div class="parameter"><strong>height</strong> <code>number</code> - Container height in pixels (default: 360)</div>
+            <div class="parameter"><strong>cornerRadius</strong> <code>number</code> - Border radius in pixels (default: 8)</div>
+            <div class="parameter"><strong>downloadImagesAutomatically</strong> <code>boolean</code> - Cache images as blobs (default: false)</div>
+            <div class="parameter"><strong>showDebug</strong> <code>boolean</code> - Show debug overlay (default: false)</div>
+            <div class="parameter"><strong>enableProgress</strong> <code>boolean</code> - Show loading progress (default: true)</div>
+            <div class="parameter"><strong>showLabel</strong> <code>boolean</code> - Show person name label (default: false)</div>
+            <div class="parameter"><strong>draggable</strong> <code>boolean</code> - Make viewer draggable (default: false)</div>
+            <div class="parameter"><strong>resizable</strong> <code>boolean</code> - Make viewer resizable (default: false)</div>
+          </div>
+
+          <div class="code-section">
+            <h3>Callbacks</h3>
+            <div class="code-block">
+              <span class="keyword">const</span> <span class="function">viewer</span> = <span class="keyword">new</span> <span class="function">FaceLookerViewer</span>({<br>
+              &nbsp;&nbsp;<span class="string">faces</span>: <span class="string">'./faces/01/'</span>,<br>
+              &nbsp;&nbsp;<span class="string">onLoad</span>: (<span class="function">imageCache</span>, <span class="function">metaData</span>) => {<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Loaded:'</span>, <span class="function">imageCache</span>.size);<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Meta:'</span>, <span class="function">metaData</span>.name);<br>
+              &nbsp;&nbsp;},<br>
+              &nbsp;&nbsp;<span class="string">onProgress</span>: (<span class="function">progress</span>, <span class="function">loaded</span>, <span class="function">total</span>) => {<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">`Loading: </span>${<span class="function">Math</span>.<span class="function">round</span>(<span class="function">progress</span>)}<span class="string">%`</span>);<br>
+              &nbsp;&nbsp;},<br>
+              &nbsp;&nbsp;<span class="string">onReady</span>: () => {<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Face viewer ready!'</span>);<br>
+              &nbsp;&nbsp;}<br>
+              });
+            </div>
+          </div>
+        </div>
+
+        <!-- About Tab -->
+        <div class="tab-pane" id="about-tab">
+          <div class="about-section">
+            <h3>What is Face Looker Viewer?</h3>
+            <p>A modern ES6 module that creates interactive face tracking experiences. The face follows your cursor movement by seamlessly switching between pre-rendered images from a grid system.</p>
+            <p>Built with vanilla JavaScript - no frameworks required. Perfect for interactive web experiences, portfolios, or creative projects.</p>
+          </div>
+
+          <div class="about-section">
+            <h3>How It Works</h3>
+            <p>The system uses a grid-based approach with 121 pre-rendered face images covering different gaze directions (-15° to +15° on both X and Y axes with 3° steps).</p>
+            <p>As you move your cursor, the module calculates the appropriate position and instantly displays the corresponding image, creating a smooth face-following effect.</p>
+          </div>
+
+          <div class="about-section">
+            <h3>Key Features</h3>
+            <div class="feature-grid">
+              <div class="feature-card">
+                <h4>🎯 ES6 Module</h4>
+                <p>Modern JavaScript with clean API and comprehensive documentation</p>
+              </div>
+              <div class="feature-card">
+                <h4>📱 Responsive</h4>
+                <p>Works on desktop and mobile with touch support</p>
+              </div>
+              <div class="feature-card">
+                <h4>⚡ Performance</h4>
+                <p>Image preloading and caching for instant response</p>
+              </div>
+              <div class="feature-card">
+                <h4>🎨 Customizable</h4>
+                <p>Flexible configuration with callbacks and styling options</p>
+              </div>
+              <div class="feature-card">
+                <h4>📊 Metadata Support</h4>
+                <p>Load and display person information from meta.json</p>
+              </div>
+              <div class="feature-card">
+                <h4>🔧 Debug Mode</h4>
+                <p>Built-in debugging tools for development</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <h3>File Structure</h3>
+            <div class="code-block">
+              faces/<br>
+              ├── 01/<br>
+              │   ├── meta.json<br>
+              │   ├── gaze_px0p0_py0p0_256.webp<br>
+              │   ├── gaze_px3p0_py0p0_256.webp<br>
+              │   └── ... (121 total images)<br>
+              ├── 02/<br>
+              │   ├── meta.json<br>
+              │   └── ... (different person)<br>
+            </div>
+          </div>
+
+          <div class="about-section">
+            <h3>Browser Support</h3>
+            <p>Modern browsers that support ES6 modules:</p>
+            <div class="parameter-list">
+              <div class="parameter">Chrome 61+</div>
+              <div class="parameter">Firefox 60+</div>
+              <div class="parameter">Safari 10.1+</div>
+              <div class="parameter">Edge 16+</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="progress-text" id="progressText">Loading face images...</div>
+
+    <!-- Main Content Area (Figma-style Canvas) -->
+    <div class="main-content">
+      <div class="canvas-area" id="canvas">
+        <!-- Face viewers will be dynamically added here -->
+      </div>
+    </div>
   </div>
 
-  <!-- Main Application (Initially Hidden) -->
-  <div class="main-content" id="mainContent">
-    <div class="header">Move your cursor around the face</div>
-    <div class="container">
-      <div class="face-tracker" id="face" data-base-path="faces/" data-debug="false"></div>
-    </div>
-  </div>
+  <script type="module">
+    import { FaceLookerViewer } from './FaceLookerViewer.js';
 
-  <script src="./face-tracker.js" defer></script>
+    // Console output handler
+    function addConsoleMessage(message) {
+      const console = document.getElementById('console');
+      const line = document.createElement('div');
+      line.className = 'console-line';
+      line.textContent = message;
+      console.appendChild(line);
+      console.scrollTop = console.scrollHeight;
+
+      // Keep only last 10 messages
+      while (console.children.length > 10) {
+        console.removeChild(console.firstChild);
+      }
+    }
+
+    // Canvas viewer management
+    let viewers = [];
+    let viewerIdCounter = 0;
+
+    function getViewerConfig(size) {
+      const sizes = {
+        small: { width: 240, height: 240 },
+        medium: { width: 360, height: 360 },
+        large: { width: 480, height: 480 }
+      };
+      return sizes[size];
+    }
+
+    function addViewer(x = null, y = null) {
+      const size = document.getElementById('sizeSelect').value;
+      const debug = document.getElementById('debugToggle').checked;
+      const showLabel = document.getElementById('labelToggle').checked;
+      const draggable = document.getElementById('dragToggle').checked;
+      const resizable = document.getElementById('resizeToggle').checked;
+
+      const config = getViewerConfig(size);
+      const canvas = document.getElementById('canvas');
+
+      // Position viewer
+      const canvasRect = canvas.getBoundingClientRect();
+      const viewerX = x !== null ? x : (canvasRect.width / 2 - config.width / 2);
+      const viewerY = y !== null ? y : (canvasRect.height / 2 - config.height / 2);
+
+      addConsoleMessage(`Adding viewer #${viewerIdCounter + 1}...`);
+
+      const viewer = new FaceLookerViewer({
+        faces: './faces/01/',
+        width: config.width,
+        height: config.height,
+        cornerRadius: 8,
+        showDebug: debug,
+        showLabel: showLabel,
+        draggable: draggable,
+        resizable: resizable,
+        downloadImagesAutomatically: false,
+        onLoad: (imageCache, metaData) => {
+          addConsoleMessage(`✓ Viewer #${viewer.id} loaded: ${imageCache.size} images`);
+          if (metaData) {
+            addConsoleMessage(`✓ Viewer #${viewer.id}: ${metaData.name} - ${metaData.subtitle}`);
+          }
+        },
+        onProgress: (progress, loaded, total) => {
+          if (loaded === 1) addConsoleMessage(`Viewer #${viewer.id} loading...`);
+        },
+        onReady: () => {
+          addConsoleMessage(`✓ Viewer #${viewer.id} ready!`);
+        }
+      });
+
+      // Add unique ID and track
+      viewer.id = ++viewerIdCounter;
+      viewers.push(viewer);
+
+      // Position and add to canvas
+      const element = viewer.getElement();
+      element.style.position = 'absolute';
+      element.style.left = `${viewerX}px`;
+      element.style.top = `${viewerY}px`;
+      canvas.appendChild(element);
+
+      return viewer;
+    }
+
+    function clearCanvas() {
+      viewers.forEach(viewer => viewer.destroy());
+      viewers = [];
+      viewerIdCounter = 0;
+      addConsoleMessage('Canvas cleared');
+    }
+
+    function resetViewers() {
+      clearCanvas();
+      // Add two initial viewers
+      addViewer(100, 100);
+      addViewer(500, 100);
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs and panes
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+
+        // Add active class to clicked tab and corresponding pane
+        tab.classList.add('active');
+        const tabId = tab.dataset.tab + '-tab';
+        document.getElementById(tabId).classList.add('active');
+      });
+    });
+
+    // Demo controls
+    document.getElementById('addViewerBtn').addEventListener('click', () => {
+      addViewer();
+    });
+
+    document.getElementById('clearCanvasBtn').addEventListener('click', clearCanvas);
+    document.getElementById('resetBtn').addEventListener('click', resetViewers);
+
+    // Label toggle functionality for existing viewers
+    document.getElementById('labelToggle').addEventListener('change', (e) => {
+      viewers.forEach(viewer => {
+        if (viewer.setLabelVisibility) {
+          viewer.setLabelVisibility(e.target.checked);
+        }
+      });
+    });
+
+    // Double-click on canvas to add viewer at that position
+    document.getElementById('canvas').addEventListener('dblclick', (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      addViewer(x - 180, y - 180); // Center the viewer on click position
+    });
+
+    // Initial load - add two viewers
+    resetViewers();
+
+    // Make globally accessible
+    window.faceViewers = viewers;
+  </script>
 </body>
 </html>
