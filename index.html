@@ -61,6 +61,145 @@
       border-color: #9ca3af;
     }
 
+    /* Dropdown Segmented Control */
+    .add-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .add-segmented {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .add-btn {
+      padding: 8px 12px;
+      background: white;
+      border: none;
+      border-right: 1px solid #d1d5db;
+      font-size: 14px;
+      color: #374151;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      min-height: 32px;
+      min-width: 44px;
+      font-weight: 600;
+    }
+
+    .add-btn:hover {
+      background: #f9fafb;
+    }
+
+    .add-selected {
+      padding: 8px 12px;
+      background: white;
+      border: none;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      min-height: 32px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .add-selected:hover {
+      background: #f9fafb;
+    }
+
+    .add-selected:after {
+      content: '▼';
+      margin-left: 4px;
+      font-size: 10px;
+      transition: transform 0.2s ease;
+    }
+
+    .add-selected:hover:after {
+      transform: translateY(1px);
+    }
+
+    .add-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      min-width: 180px;
+      display: none;
+    }
+
+    .add-menu.show {
+      display: block;
+    }
+
+    .add-menu-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #374151;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s ease;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .add-menu-item:hover {
+      background: #f3f4f6;
+    }
+
+    .add-menu-item:first-child {
+      border-radius: 6px 6px 0 0;
+    }
+
+    .add-menu-item:last-child {
+      border-radius: 0 0 6px 6px;
+    }
+
+    .face-set-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 600;
+      color: #6b7280;
+    }
+
+    .face-set-info {
+      flex: 1;
+    }
+
+    .face-set-name {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .face-set-path {
+      font-size: 11px;
+      color: #6b7280;
+    }
+
     .nav-icon {
       font-size: 14px;
     }
@@ -529,10 +668,19 @@
     </div>
 
     <div class="navbar-controls">
-      <button class="nav-btn" id="addViewerBtn">
-        <span class="nav-icon">+</span>
-        Add Viewer
-      </button>
+      <div class="add-dropdown">
+        <div class="add-segmented">
+          <button class="add-btn" id="addViewerBtn">
+            <span class="nav-icon">+</span>
+          </button>
+          <button class="add-selected" id="dropdownBtn">
+            <span id="selectedFaceSet">01</span>
+          </button>
+        </div>
+        <div class="add-menu" id="addMenu">
+          <!-- Face sets will be populated dynamically -->
+        </div>
+      </div>
       <button class="nav-btn" id="clearCanvasBtn">
         <span class="nav-icon">🗑️</span>
         Clear
@@ -758,6 +906,8 @@
     let viewers = [];
     let viewerIdCounter = 0;
     let selectedViewer = null;
+    let selectedFaceSet = '01'; // Default face set
+    let availableFaceSets = [];
 
     function getViewerConfig(size) {
       const sizes = {
@@ -766,6 +916,113 @@
         large: { width: 480, height: 480 }
       };
       return sizes[size];
+    }
+
+    async function detectFaceSets() {
+      try {
+        // Try to fetch the faces directory
+        const facesResponse = await fetch('./faces/');
+        const facesText = await facesResponse.text();
+
+        // Parse directory listing (this is a simple approach)
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(facesText, 'text/html');
+        const links = Array.from(doc.querySelectorAll('a'));
+
+        availableFaceSets = [];
+
+        for (const link of links) {
+          const href = link.getAttribute('href');
+          if (href && href.endsWith('/') && href !== './' && href !== '../') {
+            const folderName = href.replace('./', '').replace('/', '');
+            if (folderName && !folderName.startsWith('.')) {
+              availableFaceSets.push(folderName);
+            }
+          }
+        }
+
+        // If no directory listing available, try common folders
+        if (availableFaceSets.length === 0) {
+          const commonFolders = ['01', '02', '03'];
+          for (const folder of commonFolders) {
+            try {
+              const testResponse = await fetch(`./faces/${folder}/meta.json`);
+              if (testResponse.ok) {
+                availableFaceSets.push(folder);
+              }
+            } catch (error) {
+              // Folder doesn't exist or no meta.json
+            }
+          }
+        }
+
+        // Sort face sets numerically
+        availableFaceSets.sort((a, b) => {
+          const numA = parseInt(a);
+          const numB = parseInt(b);
+          return numA - numB;
+        });
+
+        console.log('🎭 Detected face sets:', availableFaceSets);
+        populateFaceSetDropdown();
+
+      } catch (error) {
+        console.warn('Could not auto-detect face sets:', error);
+        // Fallback to default face set
+        availableFaceSets = ['01'];
+        populateFaceSetDropdown();
+      }
+    }
+
+    function populateFaceSetDropdown() {
+      const addMenu = document.getElementById('addMenu');
+      const selectedFaceSetEl = document.getElementById('selectedFaceSet');
+
+      addMenu.innerHTML = '';
+
+      availableFaceSets.forEach(async (faceSet) => {
+        const menuItem = document.createElement('button');
+        menuItem.className = 'add-menu-item';
+        menuItem.onclick = () => {
+          selectedFaceSet = faceSet;
+          selectedFaceSetEl.textContent = faceSet;
+          closeAddMenu();
+          // Don't automatically add viewer - let user click + button
+        };
+
+        // Try to load metadata for this face set
+        let faceSetName = `Face ${faceSet}`;
+        try {
+          const metaResponse = await fetch(`./faces/${faceSet}/meta.json`);
+          if (metaResponse.ok) {
+            const metaData = await metaResponse.json();
+            faceSetName = metaData.name || `Face ${faceSet}`;
+          }
+        } catch (error) {
+          // No metadata available
+        }
+
+        menuItem.innerHTML = `
+          <div class="face-set-icon">${faceSet}</div>
+          <div class="face-set-info">
+            <div class="face-set-name">${faceSetName} (${faceSet})</div>
+            <div class="face-set-path">faces/${faceSet}/</div>
+          </div>
+        `;
+
+        addMenu.appendChild(menuItem);
+      });
+
+      // Set default selection to first available face set
+      if (availableFaceSets.length > 0) {
+        selectedFaceSet = availableFaceSets[0];
+        selectedFaceSetEl.textContent = selectedFaceSet;
+      }
+    }
+
+    function closeAddMenu() {
+      const addMenu = document.getElementById('addMenu');
+      addMenu.classList.remove('show');
     }
 
     function addViewer(x = null, y = null) {
@@ -782,12 +1039,10 @@
       const viewerX = x !== null ? x : (canvasRect.width / 2 - config.width / 2);
       const viewerY = y !== null ? y : (canvasRect.height / 2 - config.height / 2);
 
-      addConsoleMessage(`Adding viewer #${viewerIdCounter + 1}...`);
-
-      console.log('🏗️ Creating new viewer with config:', { debug, showLabel });
+      addConsoleMessage(`Adding viewer #${viewerIdCounter + 1} from face set ${selectedFaceSet}...`);
 
       const viewer = new FaceLookerViewer({
-        faces: './faces/01/',
+        faces: `./faces/${selectedFaceSet}/`,
         width: config.width,
         height: config.height,
         cornerRadius: 8,
@@ -852,8 +1107,6 @@
         // Update sidebar controls to match selected viewer's state
         document.getElementById('debugToggle').checked = selectedViewer.config.showDebug;
         document.getElementById('labelToggle').checked = selectedViewer.config.showLabel;
-        document.getElementById('dragToggle').checked = selectedViewer.config.draggable;
-        document.getElementById('resizeToggle').checked = selectedViewer.config.resizable;
 
         // Simple selection display: Index + Name
         selectionName.textContent = `#${selectedViewer.id} Mammootty`;
@@ -899,9 +1152,26 @@
       });
     });
 
-    // Demo controls (now in navbar)
-    document.getElementById('addViewerBtn').addEventListener('click', () => {
-      addViewer();
+    // Add button and dropdown functionality
+    const addViewerBtn = document.getElementById('addViewerBtn');
+    const dropdownBtn = document.getElementById('dropdownBtn');
+    const addMenu = document.getElementById('addMenu');
+
+    addViewerBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addViewer(); // Directly add viewer with current selected face set
+    });
+
+    dropdownBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      addMenu.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.add-dropdown')) {
+        closeAddMenu();
+      }
     });
 
     document.getElementById('clearCanvasBtn').addEventListener('click', clearCanvas);
@@ -933,8 +1203,10 @@
 
     
     
-    // Initial load - add single viewer
-    resetViewers();
+    // Initialize: detect face sets and load initial viewer
+    detectFaceSets().then(() => {
+      resetViewers();
+    });
 
     // Make globally accessible
     window.faceViewers = viewers;
