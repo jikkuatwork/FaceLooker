@@ -3,6 +3,16 @@
  * A modern ES6 module for displaying interactive faces that follow cursor movement
  */
 
+// Debug configuration - should match the main HTML file
+const DEBUG_MODE = false; // Set to false for production to reduce console noise
+
+// Debug logging function
+function debugLog(...args) {
+  if (DEBUG_MODE) {
+    console.log(...args);
+  }
+}
+
 export class FaceLooker {
   constructor(options = {}) {
     // Configuration
@@ -79,7 +89,7 @@ export class FaceLooker {
     // Add selection capability
     this.container.addEventListener('click', (e) => {
       e.stopPropagation();
-      console.log('🖱️ Viewer clicked, ID:', this.id);
+      debugLog('🖱️ Viewer clicked, ID:', this.id);
       this.select();
     });
 
@@ -265,7 +275,7 @@ export class FaceLooker {
         this.updateMetaDisplay();
       }
     } catch (error) {
-      console.log('No meta.json found or error loading metadata:', error);
+      debugLog('No meta.json found or error loading metadata:', error);
     }
 
     this.startImageLoading();
@@ -648,7 +658,7 @@ export class FaceLooker {
   }
 
   select() {
-    console.log('🎯 select() called for viewer:', this.id);
+    debugLog('🎯 select() called for viewer:', this.id);
 
     // Remove selection from all other viewers and reset their z-index
     document.querySelectorAll('.face-looker-viewer').forEach(el => {
@@ -681,26 +691,26 @@ export class FaceLooker {
       this.resizeHandle.style.display = 'block';
     }
 
-    console.log(`✅ Viewer #${this.id} selected and brought to front with z-index: ${highestZIndex}`);
+    debugLog(`✅ Viewer #${this.id} selected and brought to front with z-index: ${highestZIndex}`);
 
     // Trigger selection callback
     if (this.config.onSelect && typeof this.config.onSelect === 'function') {
-      console.log('📞 Calling onSelect callback...');
+      debugLog('📞 Calling onSelect callback...');
       try {
         this.config.onSelect(this);
-        console.log('✅ onSelect callback executed successfully');
+        debugLog('✅ onSelect callback executed successfully');
       } catch (error) {
         console.error('❌ Error in onSelect callback:', error);
       }
     } else {
-      console.log('❌ onSelect callback not available or not a function');
+      debugLog('❌ onSelect callback not available or not a function');
     }
 
     // Global selection event
     const event = new CustomEvent('viewerSelected', {
       detail: { viewer: this, id: this.id }
     });
-    console.log('📡 Dispatching global event:', event.detail);
+    debugLog('📡 Dispatching global event:', event.detail);
     window.dispatchEvent(event);
   }
 

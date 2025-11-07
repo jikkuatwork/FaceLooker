@@ -1,0 +1,24 @@
+# FaceLooker Icon Design
+# 512x512 PNG - Clean, modern face tracking icon
+
+## Design Concept:
+- Simple face outline with tracking dots
+- Clean, minimalist design
+- Blue color scheme matching app theme (#6366f1)
+- Professional and approachable
+
+## Elements:
+1. Central face silhouette (simple outline)
+2. Tracking grid dots around the face
+3. Clean typography "FL" or face icon
+4. Subtle shadow/depth effect
+
+## Colors:
+- Primary: #6366f1 (Figma blue)
+- Background: White/transparent
+- Accent: #f0f0f0 (light gray)
+
+## Usage:
+- App icon for PWA
+- Favicon for browsers
+- Taskbar/desktop icons

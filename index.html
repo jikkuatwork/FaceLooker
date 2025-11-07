@@ -3,7 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Face Looker Viewer (ES6 Module)</title>
+  <title>FaceLooker</title>
+  <meta name="description" content="Interactive face tracking experience with multiple face sets">
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#6366f1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="FaceLooker">
+
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="assets/icon.png">
+  <link rel="shortcut icon" href="assets/icon.png">
   <style>
     * {
       margin: 0;
@@ -1040,11 +1055,12 @@
 <body>
   <!-- Top Navbar -->
   <div class="navbar">
-    <div class="navbar-brand">
-      <h1>Face Looker Viewer</h1>
+      <div class="navbar-brand">
+      <h1>FaceLooker</h1>
     </div>
-
-      </div>
+    <div class="navbar-controls">
+    </div>
+  </div>
 
   <div class="app-container">
     <!-- Sidebar -->
@@ -1319,7 +1335,7 @@
     <!-- Bottom Toolbar -->
     <div class="bottom-toolbar">
       <div class="toolbar-left">
-        <span style="font-size: 12px; color: #6b7280;">Face Looker Viewer</span>
+        <span style="font-size: 12px; color: #6b7280;">FaceLooker</span>
       </div>
       <div class="toolbar-right">
         <button class="toolbar-btn" id="consoleToggle">
@@ -1342,6 +1358,16 @@
 
   <script type="module">
     import { FaceLooker } from './FaceLooker.js';
+
+    // Debug configuration
+    const DEBUG_MODE = false; // Set to false for production to reduce console noise
+
+    // Debug logging function
+    function debugLog(...args) {
+      if (DEBUG_MODE) {
+        console.log(...args);
+      }
+    }
 
     // Console output handler
     function addConsoleMessage(message) {
@@ -1436,7 +1462,7 @@
                 basePath: basePath,
                 displayName: folderName
               });
-              console.log(`✓ Found face set: ${folderName} at ${basePath}`);
+              debugLog(`✓ Found face set: ${folderName} at ${basePath}`);
             } else {
               console.warn(`⚠️ Face set ${folderName} exists but no meta.json found at ${metaUrl}`);
             }
@@ -1455,7 +1481,7 @@
           }];
         }
 
-        console.log('🎭 Loaded face sets from registry:', availableFaceSets);
+        debugLog('🎭 Loaded face sets from registry:', availableFaceSets);
         populateFaceSetDropdown();
 
       } catch (error) {
@@ -1569,9 +1595,9 @@
         resizable: true, // Always resizable (but only shown when selected)
         downloadImagesAutomatically: false,
         onSelect: (selectedViewerInstance) => {
-          console.log('📞 onSelect callback called with:', selectedViewerInstance);
+          debugLog('📞 onSelect callback called with:', selectedViewerInstance);
           selectedViewer = selectedViewerInstance;
-          console.log('📱 Global selectedViewer updated to:', selectedViewer);
+          debugLog('📱 Global selectedViewer updated to:', selectedViewer);
           updateSelectedInfo();
         },
         onLoad: (imageCache, metaData) => {
@@ -1664,12 +1690,12 @@
     }
 
     function updateAllViewers() {
-      console.log('🎛️ updateAllViewers() called');
+      debugLog('🎛️ updateAllViewers() called');
 
       const debug = document.getElementById('debugToggle').checked;
       const showLabel = document.getElementById('labelToggle').checked;
 
-      console.log('🎛️ Universal settings:', { debug, showLabel });
+      debugLog('🎛️ Universal settings:', { debug, showLabel });
 
       // Apply settings to all viewers
       viewers.forEach(viewer => {
@@ -1763,9 +1789,9 @@
 
     // Handle global selection events
     window.addEventListener('viewerSelected', (e) => {
-      console.log('🎯 Global selection event received:', e.detail);
+      debugLog('🎯 Global selection event received:', e.detail);
       selectedViewer = e.detail.viewer;
-      console.log('📱 Updated selectedViewer to:', selectedViewer);
+      debugLog('📱 Updated selectedViewer to:', selectedViewer);
       updateSelectedInfo();
     });
 
@@ -1898,6 +1924,30 @@
 
     // Make globally accessible
     window.faceViewers = viewers;
+  </script>
+
+  <!-- Service Worker Registration -->
+  <script>
+    // Debug configuration for service worker registration
+    const DEBUG_MODE = false;
+
+    function debugLog(...args) {
+      if (DEBUG_MODE) {
+        console.log(...args);
+      }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((registration) => {
+            debugLog('Service Worker registered successfully:', registration);
+          })
+          .catch((error) => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
   </script>
 </body>
 </html>

@@ -1,0 +1,4 @@
+Placeholder for icon-192.png
+192x192 pixel icon for FaceLooker PWA
+Design: Face with tracking dots, blue theme
+Replace with actual PNG file
