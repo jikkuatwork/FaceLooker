@@ -71,8 +71,15 @@ export class FaceLookerViewer {
       background: #f0f0f0;
       border-radius: ${this.config.cornerRadius}px;
       overflow: hidden;
-      ${this.config.draggable ? 'cursor: move;' : ''}
+      cursor: default;
     `;
+
+    // Add selection capability
+    this.container.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('🖱️ Viewer clicked, ID:', this.id);
+      this.select();
+    });
 
     // Add drag and resize handlers
     if (this.config.draggable) {
@@ -241,6 +248,7 @@ export class FaceLookerViewer {
       font-size: 12px;
       line-height: 1.4;
       pointer-events: none;
+      display: ${this.config.showDebug ? 'block' : 'none'};
     `;
     this.mainContent.appendChild(this.debugEl);
   }
@@ -478,6 +486,15 @@ export class FaceLookerViewer {
       justify-content: center;
     `;
 
+    // Update container cursor on drag handle hover
+    dragHandle.addEventListener('mouseenter', () => {
+      this.container.style.cursor = 'move';
+    });
+
+    dragHandle.addEventListener('mouseleave', () => {
+      this.container.style.cursor = 'default';
+    });
+
     // Add drag icon dots
     dragHandle.innerHTML = `
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px;">
@@ -627,6 +644,51 @@ export class FaceLookerViewer {
     }
   }
 
+  select() {
+    console.log('🎯 select() called for viewer:', this.id);
+    console.log('🔧 Config object:', this.config);
+    console.log('📞 onSelect exists:', !!this.config.onSelect);
+    console.log('📞 onSelect type:', typeof this.config.onSelect);
+
+    // Remove selection from all other viewers
+    document.querySelectorAll('.face-looker-viewer').forEach(el => {
+      el.classList.remove('selected');
+      el.style.outline = '';
+    });
+
+    // Select this viewer
+    this.container.classList.add('selected');
+    this.container.style.outline = '2px solid #6366f1';
+    this.container.style.outlineOffset = '2px';
+
+    console.log('✅ Viewer selected, triggering callbacks...');
+
+    // Trigger selection callback
+    if (this.config.onSelect && typeof this.config.onSelect === 'function') {
+      console.log('📞 Calling onSelect callback...');
+      try {
+        this.config.onSelect(this);
+        console.log('✅ onSelect callback executed successfully');
+      } catch (error) {
+        console.error('❌ Error in onSelect callback:', error);
+      }
+    } else {
+      console.log('❌ onSelect callback not available or not a function');
+    }
+
+    // Global selection event
+    const event = new CustomEvent('viewerSelected', {
+      detail: { viewer: this, id: this.id }
+    });
+    console.log('📡 Dispatching global event:', event.detail);
+    window.dispatchEvent(event);
+  }
+
+  deselect() {
+    this.container.classList.remove('selected');
+    this.container.style.outline = '';
+  }
+
   updateConfig(newConfig) {
     this.config = { ...this.config, ...newConfig };
 
@@ -635,6 +697,36 @@ export class FaceLookerViewer {
       this.container.style.width = `${this.config.width}px`;
       this.container.style.height = `${this.config.height}px`;
       this.container.style.borderRadius = `${this.config.cornerRadius}px`;
+    }
+
+    // Update visibility features
+    if ('showDebug' in newConfig) {
+      if (this.debugEl) {
+        this.debugEl.style.display = newConfig.showDebug ? 'block' : 'none';
+      }
+    }
+
+    if ('showLabel' in newConfig) {
+      this.setLabelVisibility(newConfig.showLabel);
+    }
+
+    // Handle drag and resize handlers
+    if ('draggable' in newConfig) {
+      if (newConfig.draggable && !this.container.querySelector('.drag-handle')) {
+        this.addDragHandlers();
+      } else if (!newConfig.draggable) {
+        const dragHandle = this.container.querySelector('.drag-handle');
+        if (dragHandle) dragHandle.remove();
+      }
+    }
+
+    if ('resizable' in newConfig) {
+      if (newConfig.resizable && !this.container.querySelector('.resize-handle')) {
+        this.addResizeHandlers();
+      } else if (!newConfig.resizable) {
+        const resizeHandle = this.container.querySelector('.resize-handle');
+        if (resizeHandle) resizeHandle.remove();
+      }
     }
   }
 }

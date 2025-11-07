@@ -336,6 +336,45 @@
       }
     }
 
+    /* Selection Panel Header */
+    .selection-header {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      color: white;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .selection-header.selected {
+      background: linear-gradient(135deg, #059669, #10b981);
+      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+
+    .selection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .selection-status-icon {
+      font-size: 16px;
+      transition: transform 0.2s ease;
+    }
+
+    .selection-header.selected .selection-status-icon {
+      transform: scale(1.1);
+    }
+
+    .selection-details {
+      font-size: 12px;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
     /* Console Output */
     .console-output {
       margin-top: 16px;
@@ -373,6 +412,17 @@
       <div class="tab-content">
         <!-- Demo Tab -->
         <div class="tab-pane active" id="demo-tab">
+          <!-- Selection Panel Header -->
+          <div class="selection-header" id="selectionHeader">
+            <div class="selection-status">
+              <span id="selectionStatusIcon">🔘</span>
+              <span id="selectionStatusText">No Selection</span>
+            </div>
+            <div class="selection-details" id="selectionDetails">
+              Click on a viewer to select it
+            </div>
+          </div>
+
           <div class="demo-controls">
             <h4>Demo Controls</h4>
             <div class="control-group">
@@ -407,6 +457,13 @@
             </div>
             <div class="control-group">
               <button class="btn" id="resetBtn">Reset Viewers</button>
+            </div>
+          </div>
+
+          <div class="parameter-list">
+            <h4>Selected Viewer</h4>
+            <div id="selectedInfo" style="color: #6b7280; font-size: 13px;">
+              Click on a viewer to select it
             </div>
           </div>
 
@@ -579,6 +636,7 @@
     // Canvas viewer management
     let viewers = [];
     let viewerIdCounter = 0;
+    let selectedViewer = null;
 
     function getViewerConfig(size) {
       const sizes = {
@@ -606,6 +664,8 @@
 
       addConsoleMessage(`Adding viewer #${viewerIdCounter + 1}...`);
 
+      console.log('🏗️ Creating new viewer with config:', { debug, showLabel, draggable, resizable });
+
       const viewer = new FaceLookerViewer({
         faces: './faces/01/',
         width: config.width,
@@ -616,6 +676,12 @@
         draggable: draggable,
         resizable: resizable,
         downloadImagesAutomatically: false,
+        onSelect: (selectedViewerInstance) => {
+          console.log('📞 onSelect callback called with:', selectedViewerInstance);
+          selectedViewer = selectedViewerInstance;
+          console.log('📱 Global selectedViewer updated to:', selectedViewer);
+          updateSelectedInfo();
+        },
         onLoad: (imageCache, metaData) => {
           addConsoleMessage(`✓ Viewer #${viewer.id} loaded: ${imageCache.size} images`);
           if (metaData) {
@@ -648,6 +714,8 @@
       viewers.forEach(viewer => viewer.destroy());
       viewers = [];
       viewerIdCounter = 0;
+      selectedViewer = null;
+      updateSelectedInfo();
       addConsoleMessage('Canvas cleared');
     }
 
@@ -656,6 +724,97 @@
       // Add two initial viewers
       addViewer(100, 100);
       addViewer(500, 100);
+    }
+
+    function updateSelectedInfo() {
+      const selectedInfo = document.getElementById('selectedInfo');
+      const selectionHeader = document.getElementById('selectionHeader');
+      const selectionStatusIcon = document.getElementById('selectionStatusIcon');
+      const selectionStatusText = document.getElementById('selectionStatusText');
+      const selectionDetails = document.getElementById('selectionDetails');
+
+      if (selectedViewer) {
+        // Update selection header (Figma-style)
+        selectionHeader.classList.add('selected');
+        selectionStatusIcon.textContent = '👁️';
+        selectionStatusText.textContent = `Viewer #${selectedViewer.id} Selected`;
+
+        // Update sidebar controls to match selected viewer's state
+        document.getElementById('debugToggle').checked = selectedViewer.config.showDebug;
+        document.getElementById('labelToggle').checked = selectedViewer.config.showLabel;
+        document.getElementById('dragToggle').checked = selectedViewer.config.draggable;
+        document.getElementById('resizeToggle').checked = selectedViewer.config.resizable;
+
+        // Update size selector if it matches known sizes
+        const width = selectedViewer.config.width;
+        const height = selectedViewer.config.height;
+        let sizeMatch = '';
+        if (width === 240 && height === 240) sizeMatch = 'small';
+        else if (width === 360 && height === 360) sizeMatch = 'medium';
+        else if (width === 480 && height === 480) sizeMatch = 'large';
+
+        if (sizeMatch) {
+          document.getElementById('sizeSelect').value = sizeMatch;
+        }
+
+        // Update selection details
+        selectionDetails.innerHTML = `
+          <div>📐 Size: ${selectedViewer.config.width}×${selectedViewer.config.height}px</div>
+          <div>🐛 Debug: ${selectedViewer.config.showDebug ? 'On' : 'Off'}</div>
+          <div>🏷️ Label: ${selectedViewer.config.showLabel ? 'On' : 'Off'}</div>
+          <div>✋ Draggable: ${selectedViewer.config.draggable ? 'Yes' : 'No'}</div>
+          <div>📏 Resizable: ${selectedViewer.config.resizable ? 'Yes' : 'No'}</div>
+        `;
+
+        // Update old info display too
+        selectedInfo.innerHTML = `
+          <div style="margin-bottom: 8px;">
+            <strong>Viewer #${selectedViewer.id}</strong>
+          </div>
+          <div style="font-size: 12px; line-height: 1.4;">
+            <div>Size: ${selectedViewer.config.width}×${selectedViewer.config.height}px</div>
+            <div>Debug: ${selectedViewer.config.showDebug ? 'On' : 'Off'}</div>
+            <div>Label: ${selectedViewer.config.showLabel ? 'On' : 'Off'}</div>
+            <div>Draggable: ${selectedViewer.config.draggable ? 'Yes' : 'No'}</div>
+            <div>Resizable: ${selectedViewer.config.resizable ? 'Yes' : 'No'}</div>
+          </div>
+        `;
+      } else {
+        // Reset selection header
+        selectionHeader.classList.remove('selected');
+        selectionStatusIcon.textContent = '🔘';
+        selectionStatusText.textContent = 'No Selection';
+        selectionDetails.textContent = 'Click on a viewer to select it';
+
+        selectedInfo.textContent = 'Click on a viewer to select it';
+      }
+    }
+
+    function updateSelectedViewer() {
+      console.log('🎛️ updateSelectedViewer() called');
+      console.log('📱 selectedViewer:', selectedViewer);
+
+      if (!selectedViewer) {
+        console.log('❌ No selected viewer, returning');
+        return;
+      }
+
+      const debug = document.getElementById('debugToggle').checked;
+      const showLabel = document.getElementById('labelToggle').checked;
+      const draggable = document.getElementById('dragToggle').checked;
+      const resizable = document.getElementById('resizeToggle').checked;
+
+      console.log('🎛️ Control values:', { debug, showLabel, draggable, resizable });
+
+      selectedViewer.updateConfig({
+        showDebug: debug,
+        showLabel: showLabel,
+        draggable: draggable,
+        resizable: resizable
+      });
+
+      updateSelectedInfo(); // Refresh display with new values
+      addConsoleMessage(`Updated viewer #${selectedViewer.id} properties`);
     }
 
     // Tab switching
@@ -680,13 +839,28 @@
     document.getElementById('clearCanvasBtn').addEventListener('click', clearCanvas);
     document.getElementById('resetBtn').addEventListener('click', resetViewers);
 
-    // Label toggle functionality for existing viewers
-    document.getElementById('labelToggle').addEventListener('change', (e) => {
-      viewers.forEach(viewer => {
-        if (viewer.setLabelVisibility) {
-          viewer.setLabelVisibility(e.target.checked);
+    // Update selected viewer when controls change
+    ['debugToggle', 'labelToggle', 'dragToggle', 'resizeToggle'].forEach(id => {
+      document.getElementById(id).addEventListener('change', updateSelectedViewer);
+    });
+
+    // Click on canvas to deselect
+    document.getElementById('canvas').addEventListener('click', (e) => {
+      if (e.target.id === 'canvas') {
+        if (selectedViewer) {
+          selectedViewer.deselect();
+          selectedViewer = null;
+          updateSelectedInfo();
         }
-      });
+      }
+    });
+
+    // Handle global selection events
+    window.addEventListener('viewerSelected', (e) => {
+      console.log('🎯 Global selection event received:', e.detail);
+      selectedViewer = e.detail.viewer;
+      console.log('📱 Updated selectedViewer to:', selectedViewer);
+      updateSelectedInfo();
     });
 
     // Double-click on canvas to add viewer at that position
@@ -697,6 +871,7 @@
       addViewer(x - 180, y - 180); // Center the viewer on click position
     });
 
+    
     // Initial load - add two viewers
     resetViewers();
 
