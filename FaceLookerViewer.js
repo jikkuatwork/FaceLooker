@@ -634,6 +634,8 @@ export class FaceLookerViewer {
     document.querySelectorAll('.face-looker-viewer').forEach(el => {
       el.classList.remove('selected');
       el.style.outline = '';
+      el.style.boxShadow = '';
+      el.style.transform = '';
       // Hide resize handle on other viewers
       const otherResizeHandle = el.querySelector('.resize-handle');
       if (otherResizeHandle) {
@@ -651,6 +653,8 @@ export class FaceLookerViewer {
     this.container.classList.add('selected');
     this.container.style.outline = '2px solid #6366f1';
     this.container.style.outlineOffset = '2px';
+    this.container.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)';
+    this.container.style.transform = 'translateY(-2px)';
 
     // Show resize handle when selected
     if (this.resizeHandle) {
@@ -683,6 +687,8 @@ export class FaceLookerViewer {
   deselect() {
     this.container.classList.remove('selected');
     this.container.style.outline = '';
+    this.container.style.boxShadow = '';
+    this.container.style.transform = '';
     // Hide resize handle when deselected
     if (this.resizeHandle) {
       this.resizeHandle.style.display = 'none';

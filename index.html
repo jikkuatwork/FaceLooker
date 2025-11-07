@@ -920,56 +920,75 @@
 
     async function detectFaceSets() {
       try {
-        // Try to fetch the faces directory
-        const facesResponse = await fetch('./faces/');
-        const facesText = await facesResponse.text();
+        // Fetch registry.json for face set paths
+        const registryResponse = await fetch('./faces/registry.json');
+        if (!registryResponse.ok) {
+          throw new Error('Registry.json not found');
+        }
 
-        // Parse directory listing (this is a simple approach)
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(facesText, 'text/html');
-        const links = Array.from(doc.querySelectorAll('a'));
-
+        const registryPaths = await registryResponse.json();
         availableFaceSets = [];
 
-        for (const link of links) {
-          const href = link.getAttribute('href');
-          if (href && href.endsWith('/') && href !== './' && href !== '../') {
-            const folderName = href.replace('./', '').replace('/', '');
-            if (folderName && !folderName.startsWith('.')) {
-              availableFaceSets.push(folderName);
+        // Process each path from registry
+        for (const path of registryPaths) {
+          try {
+            // Extract folder name from path (e.g., "faces/01/" -> "01")
+            let folderName;
+            let basePath;
+
+            if (path.startsWith('http')) {
+              // External URL - extract last part
+              const urlParts = path.replace(/\/$/, '').split('/');
+              folderName = urlParts[urlParts.length - 1];
+              basePath = path;
+            } else {
+              // Local path
+              const cleanPath = path.replace(/\/$/, ''); // Remove trailing slash
+              const pathParts = cleanPath.split('/');
+              folderName = pathParts[pathParts.length - 1];
+              basePath = path.endsWith('/') ? path : path + '/';
             }
+
+            // Test if meta.json exists for this face set
+            const metaUrl = basePath + 'meta.json';
+            const metaResponse = await fetch(metaUrl);
+
+            if (metaResponse.ok) {
+              availableFaceSets.push({
+                folderName: folderName,
+                basePath: basePath,
+                displayName: folderName
+              });
+              console.log(`✓ Found face set: ${folderName} at ${basePath}`);
+            } else {
+              console.warn(`⚠️ Face set ${folderName} exists but no meta.json found at ${metaUrl}`);
+            }
+          } catch (error) {
+            console.warn(`❌ Failed to load face set from ${path}:`, error.message);
           }
         }
 
-        // If no directory listing available, try common folders
         if (availableFaceSets.length === 0) {
-          const commonFolders = ['01', '02', '03'];
-          for (const folder of commonFolders) {
-            try {
-              const testResponse = await fetch(`./faces/${folder}/meta.json`);
-              if (testResponse.ok) {
-                availableFaceSets.push(folder);
-              }
-            } catch (error) {
-              // Folder doesn't exist or no meta.json
-            }
-          }
+          console.warn('No valid face sets found in registry.json');
+          // Fallback to default
+          availableFaceSets = [{
+            folderName: '01',
+            basePath: 'faces/01/',
+            displayName: '01'
+          }];
         }
 
-        // Sort face sets numerically
-        availableFaceSets.sort((a, b) => {
-          const numA = parseInt(a);
-          const numB = parseInt(b);
-          return numA - numB;
-        });
-
-        console.log('🎭 Detected face sets:', availableFaceSets);
+        console.log('🎭 Loaded face sets from registry:', availableFaceSets);
         populateFaceSetDropdown();
 
       } catch (error) {
-        console.warn('Could not auto-detect face sets:', error);
+        console.error('Could not load face sets from registry.json:', error);
         // Fallback to default face set
-        availableFaceSets = ['01'];
+        availableFaceSets = [{
+          folderName: '01',
+          basePath: 'faces/01/',
+          displayName: '01'
+        }];
         populateFaceSetDropdown();
       }
     }
@@ -980,33 +999,33 @@
 
       addMenu.innerHTML = '';
 
-      availableFaceSets.forEach(async (faceSet) => {
+      availableFaceSets.forEach(async (faceSetInfo) => {
         const menuItem = document.createElement('button');
         menuItem.className = 'add-menu-item';
         menuItem.onclick = () => {
-          selectedFaceSet = faceSet;
-          selectedFaceSetEl.textContent = faceSet;
+          selectedFaceSet = faceSetInfo.basePath;
+          selectedFaceSetEl.textContent = faceSetInfo.displayName;
           closeAddMenu();
           // Don't automatically add viewer - let user click + button
         };
 
         // Try to load metadata for this face set
-        let faceSetName = `Face ${faceSet}`;
+        let faceSetName = `Face ${faceSetInfo.displayName}`;
         try {
-          const metaResponse = await fetch(`./faces/${faceSet}/meta.json`);
+          const metaResponse = await fetch(faceSetInfo.basePath + 'meta.json');
           if (metaResponse.ok) {
             const metaData = await metaResponse.json();
-            faceSetName = metaData.name || `Face ${faceSet}`;
+            faceSetName = metaData.name || `Face ${faceSetInfo.displayName}`;
           }
         } catch (error) {
           // No metadata available
         }
 
         menuItem.innerHTML = `
-          <div class="face-set-icon">${faceSet}</div>
+          <div class="face-set-icon">${faceSetInfo.displayName}</div>
           <div class="face-set-info">
-            <div class="face-set-name">${faceSetName} (${faceSet})</div>
-            <div class="face-set-path">faces/${faceSet}/</div>
+            <div class="face-set-name">${faceSetName} (${faceSetInfo.displayName})</div>
+            <div class="face-set-path">${faceSetInfo.basePath}</div>
           </div>
         `;
 
@@ -1015,8 +1034,8 @@
 
       // Set default selection to first available face set
       if (availableFaceSets.length > 0) {
-        selectedFaceSet = availableFaceSets[0];
-        selectedFaceSetEl.textContent = selectedFaceSet;
+        selectedFaceSet = availableFaceSets[0].basePath;
+        selectedFaceSetEl.textContent = availableFaceSets[0].displayName;
       }
     }
 
@@ -1026,23 +1045,39 @@
     }
 
     function addViewer(x = null, y = null) {
-      const size = 'medium'; // Default size since we removed the dropdown
+      // Randomize size selection
+      const sizes = ['small', 'medium', 'large'];
+      const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
       const debug = document.getElementById('debugToggle').checked;
       const showLabel = document.getElementById('labelToggle').checked;
       // draggable and resizable are always true now
 
-      const config = getViewerConfig(size);
+      const config = getViewerConfig(randomSize);
       const canvas = document.getElementById('canvas');
 
-      // Position viewer
+      // Position viewer with randomization
       const canvasRect = canvas.getBoundingClientRect();
-      const viewerX = x !== null ? x : (canvasRect.width / 2 - config.width / 2);
-      const viewerY = y !== null ? y : (canvasRect.height / 2 - config.height / 2);
+      const padding = 50; // Keep away from edges
 
-      addConsoleMessage(`Adding viewer #${viewerIdCounter + 1} from face set ${selectedFaceSet}...`);
+      let viewerX, viewerY;
+      if (x !== null && y !== null) {
+        // Use provided coordinates
+        viewerX = x - config.width / 2;
+        viewerY = y - config.height / 2;
+      } else {
+        // Random position within canvas bounds
+        const maxX = Math.max(0, canvasRect.width - config.width - padding * 2);
+        const maxY = Math.max(0, canvasRect.height - config.height - padding * 2);
+        viewerX = padding + Math.random() * maxX;
+        viewerY = padding + Math.random() * maxY;
+      }
+
+      const selectedFaceSetInfo = availableFaceSets.find(fs => fs.basePath === selectedFaceSet);
+      const displayName = selectedFaceSetInfo ? selectedFaceSetInfo.displayName : selectedFaceSet;
+      addConsoleMessage(`Adding viewer #${viewerIdCounter + 1} from face set ${displayName} (${randomSize})...`);
 
       const viewer = new FaceLookerViewer({
-        faces: `./faces/${selectedFaceSet}/`,
+        faces: selectedFaceSet, // Use the full path from registry
         width: config.width,
         height: config.height,
         cornerRadius: 8,
