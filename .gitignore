@@ -49,10 +49,6 @@ Thumbs.db
 
 # Project specific
 out/
-*.jpg
-*.jpeg
-*.png
-!example_face.jpg
 
 # API keys and secrets
 .env.local
