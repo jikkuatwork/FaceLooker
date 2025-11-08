@@ -1090,6 +1090,8 @@
       background: white;
       color: #333;
       cursor: pointer;
+      width: 120px;
+      box-sizing: border-box;
     }
 
     .animation-select:hover {
@@ -1105,11 +1107,13 @@
     .speed-slider {
       flex: 1;
       margin-right: 8px;
+      margin-left: 12px;
       height: 4px;
       background: #e5e7eb;
       border-radius: 2px;
       outline: none;
       cursor: pointer;
+      max-width: 100px;
     }
 
     .speed-slider::-webkit-slider-thumb {
@@ -1178,7 +1182,7 @@
             <div class="property-item">
               <div class="face-set-row">
                 <div class="dropdown-selector" id="faceSetSelector">
-                  <span class="dropdown-label">Face Set</span>
+                  <span class="dropdown-label">Face</span>
                   <span class="dropdown-value">
                     <span id="selectedFaceSet">01</span>
                     <span class="dropdown-arrow">▼</span>
@@ -1386,12 +1390,12 @@
 
         <!-- About Tab -->
         <div class="tab-pane" id="about-tab">
-          <!-- Project Info Section -->
+          <!-- Project Section -->
           <div class="panel-section">
-            <div class="panel-section-header">FaceLooker Project</div>
+            <div class="panel-section-header">Project</div>
             <div class="panel-section-content">
               <div class="about-text">
-                <a href="https://github.com/jikkuatwork/FaceLooker" target="_blank">FaceLooker</a> is based on the work of <a href="https://github.com/kylan02/" target="_blank">Kylan O'Connor</a>'s <a href="https://github.com/kylan02/face_looker/" target="_blank">face_looker</a>.
+                <a href="https://github.com/jikkuatwork/FaceLooker" target="_blank">FaceLooker</a> ES6 module built by <a href="https://x.com/jikkujose" target="_blank">Jikku Jose</a>. It is based on the work of <a href="https://github.com/kylan02/" target="_blank">Kylan O'Connor</a>'s <a href="https://github.com/kylan02/face_looker/" target="_blank">face_looker</a>.
               </div>
             </div>
           </div>
