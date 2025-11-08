@@ -1190,7 +1190,7 @@
             <div class="panel-section-content">
               <div class="compact-code-block">
                 <span class="comment">// Import the ES6 module</span><br>
-                <span class="keyword">import</span> { FaceLookerViewer } <span class="keyword">from</span> <span class="string">'./FaceLookerViewer.js'</span>;
+                <span class="keyword">import</span> { FaceLooker } <span class="keyword">from</span> <span class="string">'./FaceLooker.js'</span>;
               </div>
             </div>
           </div>
@@ -1200,7 +1200,7 @@
             <div class="panel-section-header">Basic Usage</div>
             <div class="panel-section-content">
               <div class="compact-code-block">
-                <span class="keyword">const</span> <span class="function">viewer</span> = <span class="keyword">new</span> <span class="function">FaceLookerViewer</span>({<br>
+                <span class="keyword">const</span> <span class="function">viewer</span> = <span class="keyword">new</span> <span class="function">FaceLooker</span>({<br>
                 &nbsp;&nbsp;<span class="string">faces</span>: <span class="string">'./faces/01/'</span>,<br>
                 &nbsp;&nbsp;<span class="string">width</span>: <span class="number">360</span>,<br>
                 &nbsp;&nbsp;<span class="string">height</span>: <span class="number">360</span><br>
@@ -1249,10 +1249,10 @@
             <div class="panel-section-header">Callbacks</div>
             <div class="panel-section-content">
               <div class="compact-code-block">
-                <span class="keyword">const</span> <span class="function">viewer</span> = <span class="keyword">new</span> <span class="function">FaceLookerViewer</span>({<br>
+                <span class="keyword">const</span> <span class="function">viewer</span> = <span class="keyword">new</span> <span class="function">FaceLooker</span>({<br>
                 &nbsp;&nbsp;<span class="string">faces</span>: <span class="string">'./faces/01/'</span>,<br>
-                &nbsp;&nbsp;<span class="string">onLoad</span>: (<span class="function">cache</span>) => {<br>
-                &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Loaded'</span>, <span class="function">cache</span>.size);<br>
+                &nbsp;&nbsp;<span class="string">onLoad</span>: (<span class="function">stats</span>) => {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Loaded'</span>, <span class="function">stats</span>.totalImages);<br>
                 &nbsp;&nbsp;},<br>
                 &nbsp;&nbsp;<span class="string">onReady</span>: () => {<br>
                 &nbsp;&nbsp;&nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Ready!'</span>);<br>
@@ -1261,26 +1261,88 @@
               </div>
             </div>
           </div>
+
+          <!-- Advanced Features Section -->
+          <div class="panel-section">
+            <div class="panel-section-header">Advanced Features</div>
+            <div class="panel-section-content">
+              <div class="compact-code-block">
+                <span class="comment">// Import additional modules</span><br>
+                <span class="keyword">import</span> { faceSetLoader } <span class="keyword">from</span> <span class="string">'./data/FaceSetLoader.js'</span>;<br>
+                <span class="keyword">import</span> { imageCache } <span class="keyword">from</span> <span class="string">'./data/ImageCache.js'</span>;<br>
+                <span class="keyword">import</span> { eventBus } <span class="keyword">from</span> <span class="string">'./events/EventBus.js'</span>;<br>
+                <span class="keyword">import</span> { APP_CONFIG } <span class="keyword">from</span> <span class="string">'./config.js'</span>;<br>
+                <br>
+                <span class="comment">// Event-driven communication</span><br>
+                <span class="function">eventBus</span>.<span class="function">on</span>(<span class="string">'viewer:gaze-changed'</span>, <span class="keyword">(data)</span> => {<br>
+                &nbsp;&nbsp;<span class="function">console</span>.<span class="function">log</span>(<span class="string">'Gaze position:'</span>, <span class="function">data</span>.x, <span class="function">data</span>.y);<br>
+                });<br>
+                <br>
+                <span class="comment">// Load face sets programmatically</span><br>
+                <span class="keyword">const</span> <span class="function">faceSets</span> = <span class="keyword">await</span> <span class="function">faceSetLoader</span>.<span class="function">getAvailableFaceSets</span>();<br>
+                <span class="keyword">const</span> <span class="function">metadata</span> = <span class="keyword">await</span> <span class="function">faceSetLoader</span>.<span class="function">loadFaceSetMetadata</span>(<span class="function">faceSets</span>[<span class="number">0</span>].path);
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- About Tab -->
         <div class="tab-pane" id="about-tab">
+          <!-- Project Info Section -->
+          <div class="panel-section">
+            <div class="panel-section-header">FaceLooker Project</div>
+            <div class="panel-section-content">
+              <div class="about-text">
+                <a href="https://github.com/jikkuatwork/FaceLooker" target="_blank">FaceLooker</a> is based on the work of <a href="https://github.com/kylan02/" target="_blank">Kylan O'Connor</a>'s <a href="https://github.com/kylan02/face_looker/" target="_blank">face_looker</a>.
+              </div>
+            </div>
+          </div>
+
           <!-- Overview Section -->
           <div class="panel-section">
             <div class="panel-section-header">Overview</div>
             <div class="panel-section-content">
               <div class="about-text">
-                Interactive face tracking module using pre-rendered image grids. Built with vanilla ES6 JavaScript - no frameworks required.
+                AI-powered face tracking experience that generates realistic gaze-following effects. Uses Replicate's Expression Editor model to create 121 face images in an 11×11 grid, then maps cursor/touch position to the appropriate image for real-time interaction.
+              </div>
+            </div>
+          </div>
+
+          <!-- Replicate Image Generation Section -->
+          <div class="panel-section">
+            <div class="panel-section-header">Image Generation</div>
+            <div class="panel-section-content">
+              <div class="about-text">
+                <strong>How Images Are Created:</strong><br>
+                • Upload a 512×512 face photo to <a href="https://replicate.com/kylan02/face-looker" target="_blank">FaceLooker Replicate Model</a><br>
+                • AI generates 121 face images looking in different directions (11×11 grid)<br>
+                • Uses <a href="https://replicate.com/fofr/expression-editor" target="_blank">Expression Editor model</a> for realistic gaze variations<br>
+                • Images cover gaze angles from -15° to +15° in 3° increments<br>
+                • Downloads complete ZIP with images, sprite sheet, and demo code<br><br>
+                <a href="https://replicate.com/kylan02/face-looker" target="_blank">FaceLooker Replicate Model</a> can be used in free tier for generating your own face sets!
               </div>
             </div>
           </div>
 
           <!-- How It Works Section -->
           <div class="panel-section">
-            <div class="panel-section-header">How It Works</div>
+            <div class="panel-section-header">🎯 How Face Tracking Works</div>
             <div class="panel-section-content">
               <div class="about-text">
-                Uses 121 pre-rendered face images (-15° to +15°, 3° steps) to create smooth gaze-following effects based on cursor position.
+                <strong>Grid System:</strong> 11×11 images (-15° to +15°, 3° steps = 121 total)<br>
+                <strong>Real-time Tracking:</strong> Maps cursor position to appropriate face image<br>
+                <strong>Interactive Experience:</strong> Creates engaging UI elements for portfolios, avatars, and demos<br>
+                <strong>Mobile Support:</strong> Full touch gesture compatibility for mobile devices
+              </div>
+            </div>
+          </div>
+
+          <!-- Technical Implementation -->
+          <div class="panel-section">
+            <div class="panel-section-header">🛠️ Technical Implementation</div>
+            <div class="panel-section-content">
+              <div class="about-text">
+                Our refactored version advances the original vanilla JS implementation with modular ES6 architecture, event-driven design, PWA features, intelligent caching, theme system, and production optimizations while maintaining the creative AI-powered experience.
               </div>
             </div>
           </div>
@@ -1291,8 +1353,12 @@
             <div class="panel-section-content">
               <div class="compact-feature-list">
                 <div class="compact-feature">
+                  <span class="feature-icon">🤖</span>
+                  <span class="feature-text">AI Face Generation</span>
+                </div>
+                <div class="compact-feature">
                   <span class="feature-icon">🎯</span>
-                  <span class="feature-text">ES6 Module</span>
+                  <span class="feature-text">Real-time Gaze Tracking</span>
                 </div>
                 <div class="compact-feature">
                   <span class="feature-icon">📱</span>
@@ -1300,15 +1366,15 @@
                 </div>
                 <div class="compact-feature">
                   <span class="feature-icon">⚡</span>
-                  <span class="feature-text">Image Preloading & Caching</span>
+                  <span class="feature-text">Advanced Image Caching</span>
                 </div>
                 <div class="compact-feature">
                   <span class="feature-icon">🎨</span>
-                  <span class="feature-text">Customizable Styling</span>
+                  <span class="feature-text">Dynamic Theme System</span>
                 </div>
                 <div class="compact-feature">
                   <span class="feature-icon">📊</span>
-                  <span class="feature-text">Metadata Support</span>
+                  <span class="feature-text">Modular ES6 Architecture</span>
                 </div>
                 <div class="compact-feature">
                   <span class="feature-icon">🔧</span>
@@ -1442,11 +1508,107 @@
 
     function getViewerConfig(size) {
       const sizes = {
-        small: { width: 240, height: 240 },
-        medium: { width: 360, height: 360 },
-        large: { width: 480, height: 480 }
+        extraSmall: { width: 120, height: 120 },
+        small: { width: 180, height: 180 },
+        medium: { width: 240, height: 240 },
+        large: { width: 320, height: 320 }
       };
       return sizes[size];
+    }
+
+    function findBestPlacement(newViewerWidth, newViewerHeight) {
+      const canvas = document.getElementById('canvas');
+      const canvasRect = canvas.getBoundingClientRect();
+      const existingViewers = document.querySelectorAll('.face-looker-viewer');
+
+      const padding = 30;
+      const gridSize = 40; // Grid resolution for placement calculation
+
+      // Create occupancy grid
+      const gridCols = Math.floor(canvasRect.width / gridSize);
+      const gridRows = Math.floor(canvasRect.height / gridSize);
+      const occupancy = Array(gridRows).fill().map(() => Array(gridCols).fill(0));
+
+      // Mark occupied areas by existing viewers
+      existingViewers.forEach(viewer => {
+        const rect = viewer.getBoundingClientRect();
+        const relativeRect = {
+          left: rect.left - canvasRect.left,
+          top: rect.top - canvasRect.top,
+          right: rect.right - canvasRect.left,
+          bottom: rect.bottom - canvasRect.top
+        };
+
+        // Add buffer zone around each viewer
+        const buffer = 20;
+        const startCol = Math.max(0, Math.floor((relativeRect.left - buffer) / gridSize));
+        const endCol = Math.min(gridCols - 1, Math.ceil((relativeRect.right + buffer) / gridSize));
+        const startRow = Math.max(0, Math.floor((relativeRect.top - buffer) / gridSize));
+        const endRow = Math.min(gridRows - 1, Math.ceil((relativeRect.bottom + buffer) / gridSize));
+
+        for (let row = startRow; row <= endRow; row++) {
+          for (let col = startCol; col <= endCol; col++) {
+            occupancy[row][col] = 1;
+          }
+        }
+      });
+
+      // Find best placement spots (lowest occupancy)
+      const viewerGridWidth = Math.ceil(newViewerWidth / gridSize);
+      const viewerGridHeight = Math.ceil(newViewerHeight / gridSize);
+
+      let bestSpots = [];
+
+      for (let row = 0; row <= gridRows - viewerGridHeight; row++) {
+        for (let col = 0; col <= gridCols - viewerGridWidth; col++) {
+          // Calculate occupancy score for this spot
+          let score = 0;
+          let isValid = true;
+
+          for (let r = row; r < row + viewerGridHeight && r < gridRows; r++) {
+            for (let c = col; c < col + viewerGridWidth && c < gridCols; c++) {
+              score += occupancy[r][c];
+              if (occupancy[r][c] > 0) {
+                isValid = false;
+              }
+            }
+          }
+
+          if (isValid) {
+            // Calculate distance from edges (prefer not too close to edges)
+            const edgeDistance = Math.min(
+              row * gridSize,
+              col * gridSize,
+              (gridRows - row - viewerGridHeight) * gridSize,
+              (gridCols - col - viewerGridWidth) * gridSize
+            );
+
+            // Lower score is better (less crowded, better edge distance)
+            const finalScore = score - edgeDistance / 100;
+            bestSpots.push({ row, col, score: finalScore });
+          }
+        }
+      }
+
+      // Sort by score (best spots first)
+      bestSpots.sort((a, b) => a.score - b.score);
+
+      if (bestSpots.length === 0) {
+        // Fallback to random placement if no good spots found
+        return {
+          x: padding + Math.random() * (canvasRect.width - newViewerWidth - padding * 2),
+          y: padding + Math.random() * (canvasRect.height - newViewerHeight - padding * 2)
+        };
+      }
+
+      // Choose one of the best spots (add some randomness to avoid clustering)
+      const topSpots = bestSpots.slice(0, Math.min(5, bestSpots.length));
+      const chosenSpot = topSpots[Math.floor(Math.random() * topSpots.length)];
+
+      return {
+        x: chosenSpot.col * gridSize,
+        y: chosenSpot.row * gridSize
+      };
     }
 
     async function detectFaceSets() {
@@ -1580,9 +1742,25 @@
     }
 
     function addViewer(x = null, y = null) {
-      // Randomize size selection
-      const sizes = ['small', 'medium', 'large'];
-      const randomSize = sizes[Math.floor(Math.random() * sizes.length)];
+      // Smarter size selection - bias towards smaller sizes
+      const sizes = [
+        { name: 'extraSmall', weight: 40 },
+        { name: 'small', weight: 30 },
+        { name: 'medium', weight: 20 },
+        { name: 'large', weight: 10 }
+      ];
+
+      const totalWeight = sizes.reduce((sum, size) => sum + size.weight, 0);
+      let random = Math.random() * totalWeight;
+      let randomSize = 'extraSmall'; // default
+
+      for (const size of sizes) {
+        random -= size.weight;
+        if (random <= 0) {
+          randomSize = size.name;
+          break;
+        }
+      }
 
       // Use current universal settings
       const debug = document.getElementById('debugToggle').checked;
@@ -1592,21 +1770,19 @@
       const config = getViewerConfig(randomSize);
       const canvas = document.getElementById('canvas');
 
-      // Position viewer with randomization
-      const canvasRect = canvas.getBoundingClientRect();
-      const padding = 50; // Keep away from edges
-
+      // Smart positioning
       let viewerX, viewerY;
       if (x !== null && y !== null) {
         // Use provided coordinates but constrain to canvas bounds
+        const canvasRect = canvas.getBoundingClientRect();
+        const padding = 30;
         viewerX = Math.max(padding, Math.min(x - config.width / 2, canvasRect.width - config.width - padding));
         viewerY = Math.max(padding, Math.min(y - config.height / 2, canvasRect.height - config.height - padding));
       } else {
-        // Random position within canvas bounds
-        const maxX = Math.max(0, canvasRect.width - config.width - padding);
-        const maxY = Math.max(0, canvasRect.height - config.height - padding);
-        viewerX = padding + Math.random() * maxX;
-        viewerY = padding + Math.random() * maxY;
+        // Use smart placement algorithm
+        const placement = findBestPlacement(config.width, config.height);
+        viewerX = placement.x;
+        viewerY = placement.y;
       }
 
       // Generate unique ID for this viewer

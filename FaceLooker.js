@@ -149,9 +149,12 @@ export class FaceLooker {
     this.faceImage.style.cssText = `
       width: 100%;
       height: 100%;
-      object-fit: contain;
-      transition: opacity 0.1s ease-out;
+      object-fit: cover;
+      transition: opacity 0.2s ease-out;
     `;
+
+    // Set initial image to center gaze position for smooth transition
+    this.faceImage.src = `${this.config.faces}gaze_px0p0_py0p0_${APP_CONFIG.grid.imageSize}.webp`;
 
     this.imageContainer.appendChild(this.faceImage);
 
@@ -170,71 +173,105 @@ export class FaceLooker {
       left: 0;
       width: 100%;
       height: 100%;
-      background: #fafafa;
+      background: #f0f0f0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 1000;
-      transition: opacity 0.3s ease-out;
+      transition: opacity 0.2s ease-out;
     `;
 
-    // Preview image
+    // Preview image - styled exactly like the final face image
     this.previewImage = document.createElement('img');
     this.previewImage.className = 'face-preview';
     this.previewImage.alt = 'Loading face...';
     this.previewImage.style.cssText = `
-      width: ${this.config.width}px;
-      height: ${this.config.height}px;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: opacity 0.2s ease-out;
+    `;
+
+    // Set initial preview to center gaze image if available
+    this.previewImage.src = `${this.config.faces}gaze_px0p0_py0p0_${APP_CONFIG.grid.imageSize}.webp`;
+    this.previewImage.onerror = () => {
+      // Fallback to background color if center image not available
+      this.previewImage.style.display = 'none';
+    };
+
+    // Create image container for preview image (same as main content)
+    const previewImageContainer = document.createElement('div');
+    previewImageContainer.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       border-radius: ${this.config.cornerRadius}px;
-      margin-bottom: 32px;
-      background: #f0f0f0;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      object-fit: contain;
-    `;
-
-    // Progress bar
-    const progressWrapper = document.createElement('div');
-    progressWrapper.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    `;
-
-    const progressBar = document.createElement('div');
-    progressBar.style.cssText = `
-      width: 280px;
-      height: 4px;
-      background: #e5e7eb;
-      border-radius: 2px;
       overflow: hidden;
     `;
+    previewImageContainer.appendChild(this.previewImage);
 
-    this.progressBar = document.createElement('div');
-    this.progressBar.style.cssText = `
-      height: 100%;
-      background: linear-gradient(90deg, #6366f1, #8b5cf6);
-      width: 0%;
-      transition: width 0.3s ease-out;
-      border-radius: 2px;
+    // Add the preview image container to progress container (shows behind progress)
+    this.progressContainer.appendChild(previewImageContainer);
+
+    
+    // Circular progress bar - positioned in center
+    const progressIndicator = document.createElement('div');
+    progressIndicator.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      z-index: 10;
     `;
 
-    this.progressText = document.createElement('div');
-    this.progressText.style.cssText = `
-      font-family: ui-sans-serif, system-ui, Arial, sans-serif;
-      font-size: 14px;
-      color: #6b7280;
-      text-align: center;
+    // SVG circular progress bar
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '60');
+    svg.setAttribute('height', '60');
+    svg.style.cssText = `
+      transform: rotate(-90deg); /* Start from top */
     `;
-    this.progressText.textContent = 'Loading face images...';
 
-    progressBar.appendChild(this.progressBar);
-    progressWrapper.appendChild(progressBar);
-    progressWrapper.appendChild(this.progressText);
+    // Background circle
+    const backgroundCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    backgroundCircle.setAttribute('cx', '30');
+    backgroundCircle.setAttribute('cy', '30');
+    backgroundCircle.setAttribute('r', '25');
+    backgroundCircle.setAttribute('fill', 'none');
+    backgroundCircle.setAttribute('stroke', 'rgba(99, 102, 241, 0.2)');
+    backgroundCircle.setAttribute('stroke-width', '4');
 
-    this.progressContainer.appendChild(this.previewImage);
-    this.progressContainer.appendChild(progressWrapper);
+    // Progress circle
+    const progressCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    progressCircle.setAttribute('cx', '30');
+    progressCircle.setAttribute('cy', '30');
+    progressCircle.setAttribute('r', '25');
+    progressCircle.setAttribute('fill', 'none');
+    progressCircle.setAttribute('stroke', '#6366f1');
+    progressCircle.setAttribute('stroke-width', '4');
+    progressCircle.setAttribute('stroke-linecap', 'round');
+    progressCircle.style.cssText = `
+      transition: stroke-dashoffset 0.3s ease;
+      stroke-dasharray: ${2 * Math.PI * 25};
+      stroke-dashoffset: ${2 * Math.PI * 25}; /* Start at 0% */
+    `;
+
+    svg.appendChild(backgroundCircle);
+    svg.appendChild(progressCircle);
+    progressIndicator.appendChild(svg);
+
+    // Store reference for progress updates
+    this.progressIndicator = progressIndicator;
+    this.progressCircle = progressCircle;
+    this.circumference = 2 * Math.PI * 25; // Store for progress calculations
+
+    this.progressContainer.appendChild(previewImageContainer);
+    this.progressContainer.appendChild(progressIndicator);
     this.container.appendChild(this.progressContainer);
   }
 
@@ -243,7 +280,7 @@ export class FaceLooker {
     this.mainContent.className = 'face-looker-main';
     this.mainContent.style.cssText = `
       opacity: 0;
-      transition: opacity 0.3s ease-in;
+      transition: opacity 0.2s ease-out;
       width: 100%;
       height: 100%;
     `;
@@ -269,8 +306,13 @@ export class FaceLooker {
 
     this.imageContainer = document.createElement('div');
     this.imageContainer.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
+      border-radius: ${this.config.cornerRadius}px;
+      overflow: hidden;
     `;
 
     this.mainContent.appendChild(this.imageContainer);
@@ -402,12 +444,10 @@ export class FaceLooker {
       loadedCount = loaded;
       const progress = (loaded / total) * 100;
 
-      // Update progress display
-      if (this.progressBar) {
-        this.progressBar.style.width = `${progress}%`;
-      }
-      if (this.progressText) {
-        this.progressText.textContent = `Loading face images... ${loaded}/${total}`;
+      // Update circular progress bar - fill based on progress
+      if (this.progressCircle && this.circumference) {
+        const offset = this.circumference - (progress / 100) * this.circumference;
+        this.progressCircle.style.strokeDashoffset = offset;
       }
 
       // Call progress callback
@@ -428,27 +468,20 @@ export class FaceLooker {
   activate() {
     this.isActive = true;
 
-    // Show ready state
-    if (this.progressText) {
-      this.progressText.textContent = 'Ready!';
+    // Hide progress and show main content with smooth transition immediately
+    if (this.progressContainer) {
+      this.progressContainer.style.opacity = '0';
+      this.progressContainer.style.pointerEvents = 'none';
+    }
+    if (this.mainContent) {
+      this.mainContent.style.opacity = '1';
     }
 
-    // Hide progress and show main content with smooth transition
-    setTimeout(() => {
-      if (this.progressContainer) {
-        this.progressContainer.style.opacity = '0';
-        this.progressContainer.style.pointerEvents = 'none';
-      }
-      if (this.mainContent) {
-        this.mainContent.style.opacity = '1';
-      }
+    // Start tracking
+    this.startTracking();
 
-      // Start tracking
-      this.startTracking();
-
-      // Trigger ready callback
-      this.config.onReady();
-    }, 300);
+    // Trigger ready callback
+    this.config.onReady();
   }
 
   startTracking() {
