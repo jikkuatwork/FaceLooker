@@ -22,6 +22,8 @@ export class AnimationDriver {
     this.element = null;
     this.animationId = null;
     this.position = { x: 0, y: 0 };
+    this.previousPosition = { x: 0, y: 0 };
+    this.rotation = 0;
     this.time = 0;
     this.bounds = this.calculateBounds();
 
@@ -114,182 +116,86 @@ export class AnimationDriver {
     this.element = document.createElement('div');
     this.element.className = 'animation-driver-bee';
 
-    // Try to load SVG bee first, fall back to CSS bee
     try {
       const svgResponse = await fetch('./assets/bee.svg');
       if (svgResponse.ok) {
         const svgText = await svgResponse.text();
         this.element.innerHTML = svgText;
+
+        // Add bee-specific styling and animations
         this.element.style.cssText = `
           position: fixed;
-          width: 32px;
-          height: 32px;
+          width: 16px;
+          height: 16px;
           z-index: 10000;
           pointer-events: auto;
           cursor: pointer;
-          transition: transform 0.1s ease-out;
+          transition: transform 0.05s ease-out;
           transform: translate(-50%, -50%);
         `;
+
+        // Add wing animation and directional rotation
+        this.addBeeAnimations();
         this.addCommonInteractions('bee');
         document.body.appendChild(this.element);
         return;
       }
     } catch (error) {
-      console.log('Could not load bee.svg, using CSS bee');
+      console.error('Could not load bee.svg:', error);
+      throw new Error('Bee SVG not found in assets folder');
     }
-
-    // Fall back to CSS bee
-    this.element.innerHTML = `
-      <div class="bee-body">
-        <div class="bee-stripe stripe-1"></div>
-        <div class="bee-stripe stripe-2"></div>
-        <div class="bee-stripe stripe-3"></div>
-        <div class="bee-wing wing-left">
-          <div class="wing-animation"></div>
-        </div>
-        <div class="bee-wing wing-right">
-          <div class="wing-animation"></div>
-        </div>
-        <div class="bee-face">
-          <div class="bee-eye eye-left"></div>
-          <div class="bee-eye eye-right"></div>
-          <div class="bee-smile"></div>
-        </div>
-      </div>
-    `;
-
-    this.element.style.cssText = `
-      position: fixed;
-      width: 32px;
-      height: 32px;
-      z-index: 10000;
-      pointer-events: auto;
-      cursor: pointer;
-      transition: transform 0.1s ease-out;
-      transform: translate(-50%, -50%);
-    `;
-
-    this.addBeeStyles();
-    this.addCommonInteractions('bee');
-    document.body.appendChild(this.element);
   }
 
   /**
-   * Add bee CSS styles
+   * Add animations to the SVG bee
    */
-  addBeeStyles() {
-    if (document.getElementById('bee-styles')) return;
-
-    const beeStyles = document.createElement('style');
-    beeStyles.id = 'bee-styles';
-    beeStyles.textContent = `
-      .bee-body {
-        position: relative;
-        width: 32px;
-        height: 28px;
-        background: linear-gradient(135deg, #FFD700, #FFA500);
-        border-radius: 50% 50% 40% 40%;
-        box-shadow: 0 3px 10px rgba(255, 215, 0, 0.4), 0 0 20px rgba(255, 215, 0, 0.2);
-        overflow: hidden;
+  addBeeAnimations() {
+    // Add CSS for wing animation
+    const beeAnimationStyles = document.createElement('style');
+    beeAnimationStyles.id = 'bee-animation-styles';
+    beeAnimationStyles.textContent = `
+      @keyframes wing-beat {
+        0% { transform: scaleX(1) translateY(0) rotateX(0deg); }
+        50% { transform: scaleX(0.5) translateY(-1px) rotateX(30deg); }
+        100% { transform: scaleX(1) translateY(0) rotateX(0deg); }
       }
 
-      .bee-stripe {
-        position: absolute;
-        width: 100%;
-        height: 3px;
-        background: #2C2C2C;
-        left: 0;
+      .animation-driver-bee #wings {
+        animation: wing-beat 0.1s infinite alternate ease-in-out;
+        transform-origin: center;
       }
 
-      .stripe-1 { top: 8px; }
-      .stripe-2 { top: 14px; }
-      .stripe-3 { top: 20px; }
-
-      .bee-wing {
-        position: absolute;
-        top: -2px;
-        width: 12px;
-        height: 16px;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.9);
+      .animation-driver-bee.paused #wings {
+        animation-play-state: paused;
+        opacity: 0.7;
       }
 
-      .wing-left {
-        left: -6px;
-        transform-origin: right center;
+      .animation-driver-bee:hover #wings {
+        animation-duration: 0.08s;
       }
 
-      .wing-right {
-        right: -6px;
-        transform-origin: left center;
-      }
-
-      .wing-animation {
+      .animation-driver-bee svg {
         width: 100%;
         height: 100%;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.6));
-        border-radius: 50%;
-        animation: flutter 0.15s infinite alternate;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
       }
 
-      @keyframes flutter {
-        0% { transform: scaleX(1) translateY(0); }
-        100% { transform: scaleX(0.7) translateY(-2px); }
+      .animation-driver-bee:hover svg {
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
       }
 
-      .bee-face {
-        position: absolute;
-        bottom: 4px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 6px;
-        align-items: center;
-      }
-
-      .bee-eye {
-        width: 3px;
-        height: 3px;
-        background: #2C2C2C;
-        border-radius: 50%;
-        position: relative;
-      }
-
-      .bee-eye::after {
-        content: '';
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        background: white;
-        border-radius: 50%;
-        top: 0;
-        left: 0;
-      }
-
-      .bee-smile {
-        width: 8px;
-        height: 2px;
-        background: #2C2C2C;
-        border-radius: 0 0 50% 50%;
-      }
-
-      .animation-driver-bee:hover .bee-body {
-        transform: scale(1.1);
-        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4);
-      }
-
-      .animation-driver-bee.paused .wing-animation {
-        animation-play-state: paused;
-      }
-
-      .animation-driver-bee.paused .bee-body {
+      .animation-driver-bee.paused svg {
         opacity: 0.6;
       }
     `;
-    document.head.appendChild(beeStyles);
+
+    // Only add styles once
+    if (!document.getElementById('bee-animation-styles')) {
+      document.head.appendChild(beeAnimationStyles);
+    }
   }
 
+  
   /**
    * Add common interactions for both dot and bee
    */
@@ -337,7 +243,7 @@ export class AnimationDriver {
       ? 'rgba(255, 215, 0, 0.4)'  // Gold trail for bee
       : 'rgba(255, 68, 68, 0.3)'; // Red trail for dot
 
-    const trailSize = this.options.visualType === 'bee' ? '12px' : '8px';
+    const trailSize = this.options.visualType === 'bee' ? '6px' : '8px';
 
     trailDot.style.cssText = `
       position: fixed;
@@ -434,14 +340,29 @@ export class AnimationDriver {
   }
 
   /**
-   * Update the dot position
+   * Update the animation position
    */
   updatePosition() {
+    // Store previous position for rotation calculation
+    this.previousPosition = { ...this.position };
     this.position = this.calculatePosition(this.time);
+
+    // Calculate rotation for bee
+    if (this.options.visualType === 'bee') {
+      this.calculateRotation();
+    }
 
     if (this.element) {
       this.element.style.left = `${this.position.x}px`;
       this.element.style.top = `${this.position.y}px`;
+
+      // Apply rotation for bee
+      if (this.options.visualType === 'bee') {
+        const svg = this.element.querySelector('svg');
+        if (svg) {
+          svg.style.transform = `translate(-50%, -50%) rotate(${this.rotation}deg)`;
+        }
+      }
     }
 
     // Create trail effect
@@ -455,6 +376,38 @@ export class AnimationDriver {
       y: this.position.y,
       source: 'animation-driver'
     }, { source: 'AnimationDriver' });
+  }
+
+  /**
+   * Calculate rotation angle based on movement direction
+   */
+  calculateRotation() {
+    const dx = this.position.x - this.previousPosition.x;
+    const dy = this.position.y - this.previousPosition.y;
+
+    // Only rotate if there's meaningful movement
+    if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+      // Calculate angle in degrees (atan2 returns radians)
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+      // Adjust angle to point in the direction of movement
+      // Add 90 degrees to make the bee face forward
+      // Subtract 45 degrees to account for the SVG's clockwise rotation
+      this.rotation = angle + 90 - 45;
+
+      // Faster rotation for more responsive movement
+      if (this.previousRotation !== undefined) {
+        // Normalize angles to handle wrap-around
+        let angleDiff = this.rotation - this.previousRotation;
+        while (angleDiff > 180) angleDiff -= 360;
+        while (angleDiff < -180) angleDiff += 360;
+
+        // Much faster rotation (80% responsiveness) for snappy movement
+        this.rotation = this.previousRotation + angleDiff * 0.8;
+      }
+
+      this.previousRotation = this.rotation;
+    }
   }
 
   /**
@@ -487,6 +440,8 @@ export class AnimationDriver {
       x: this.centerX,
       y: this.centerY
     };
+    this.previousPosition = { ...this.position };
+    this.rotation = 0;
     this.updatePosition();
 
     this.animate();
