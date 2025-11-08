@@ -155,7 +155,7 @@ export const REGISTRY_CONFIG = {
   version: '1.0',
   autoLoad: true,
   validateOnLoad: true,
-  fallbackPath: 'faces/01/'
+  fallbackPath: 'faces/02/'
 };
 
 // Export default configuration object

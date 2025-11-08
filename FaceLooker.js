@@ -20,7 +20,7 @@ export class FaceLooker {
     // Configuration - merge with defaults
     this.config = {
       ...APP_CONFIG.viewer,
-      faces: options.faces || './faces/01/', // Default fallback, will be updated in async init
+      faces: options.faces || './faces/02/', // Default fallback, will be updated in async init
       ...options,
 
       // Callbacks
@@ -79,7 +79,7 @@ export class FaceLooker {
       }, { source: 'FaceLooker' });
 
       // Update face set path to default if needed
-      if (this.config.faces === './faces/01/') {
+      if (this.config.faces === './faces/02/') {
         this.config.faces = await faceSetLoader.getDefaultFaceSet();
       }
 

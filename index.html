@@ -1493,7 +1493,7 @@
     // Canvas viewer management
     let viewers = [];
     let selectedViewer = null;
-    let selectedFaceSet = '01'; // Default face set
+    let selectedFaceSet = null; // Will be set to first face set from registry
     let availableFaceSets = [];
 
     // Generate random alphanumeric ID
@@ -1614,7 +1614,7 @@
     async function detectFaceSets() {
       try {
         // Fetch registry.json for face set paths
-        const registryResponse = await fetch('./faces/registry.json');
+        const registryResponse = await fetch('./registry.json');
         if (!registryResponse.ok) {
           throw new Error('Registry.json not found');
         }
@@ -1622,8 +1622,8 @@
         const registryData = await registryResponse.json();
         availableFaceSets = [];
 
-        // Handle new registry format with faceSets array or old format
-        const registryPaths = registryData.faceSets || registryData;
+        // Simple array format - first element is default
+        const registryPaths = Array.isArray(registryData) ? registryData : (registryData.faceSets || registryData);
 
         // Process each path from registry
         for (const faceSet of registryPaths) {
@@ -1667,12 +1667,21 @@
 
         if (availableFaceSets.length === 0) {
           console.warn('No valid face sets found in registry.json');
-          // Fallback to default
+          // Fallback to default (faces/02/ as first element)
           availableFaceSets = [{
-            folderName: '01',
-            basePath: 'faces/01/',
-            displayName: '01'
+            folderName: '02',
+            basePath: 'faces/02/',
+            displayName: '02'
           }];
+        }
+
+        // Set default to first face set from array
+        if (availableFaceSets.length > 0) {
+          selectedFaceSet = availableFaceSets[0].basePath;
+          const selectedFaceSetEl = document.getElementById('selectedFaceSet');
+          if (selectedFaceSetEl) {
+            selectedFaceSetEl.textContent = availableFaceSets[0].displayName;
+          }
         }
 
         debugLog('🎭 Loaded face sets from registry:', availableFaceSets);
@@ -1680,11 +1689,11 @@
 
       } catch (error) {
         console.error('Could not load face sets from registry.json:', error);
-        // Fallback to default face set
+        // Fallback to default face set (faces/02/ as first element)
         availableFaceSets = [{
-          folderName: '01',
-          basePath: 'faces/01/',
-          displayName: '01'
+          folderName: '02',
+          basePath: 'faces/02/',
+          displayName: '02'
         }];
         populateFaceSetDropdown();
       }

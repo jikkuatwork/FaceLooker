@@ -22,32 +22,39 @@ export class FaceSetLoader {
     }
 
     try {
-      const response = await fetch(REGISTRY_CONFIG.fallbackPath.replace('01/', 'registry.json'));
+      const response = await fetch('registry.json');
       if (!response.ok) {
         throw new Error(`Failed to load registry: ${response.status}`);
       }
 
-      this.registry = await response.json();
+      const faceSetPaths = await response.json();
 
-      if (REGISTRY_CONFIG.validateOnLoad) {
-        this.validateRegistry(this.registry);
-      }
-
-      // Cache face sets metadata
-      if (this.registry.faceSets) {
-        for (const faceSet of this.registry.faceSets) {
-          if (faceSet.enabled) {
-            this.cache.set(faceSet.id, { metadata: faceSet });
-          }
+      // Convert simple array to structured format for backward compatibility
+      this.registry = {
+        version: '2.0',
+        default: faceSetPaths[0], // First element is default
+        faceSets: faceSetPaths.map((path, index) => ({
+          id: path,
+          path: path,
+          enabled: true,
+          priority: index + 1,
+          tags: index === 0 ? ['default'] : []
+        })),
+        metadata: {
+          lastUpdated: new Date().toISOString().split('T')[0],
+          totalFaceSets: faceSetPaths.length,
+          enabledFaceSets: faceSetPaths.length,
+          autoLoad: true,
+          validateOnLoad: false
         }
-      }
+      };
 
       return this.registry;
     } catch (error) {
       console.error('Failed to load face set registry:', error);
       // Fallback to basic registry structure
       this.registry = {
-        version: '1.0',
+        version: '2.0',
         default: REGISTRY_CONFIG.fallbackPath,
         faceSets: [{
           id: REGISTRY_CONFIG.fallbackPath,
