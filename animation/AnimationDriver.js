@@ -393,20 +393,33 @@ export class AnimationDriver {
       // Adjust angle to point in the direction of movement
       // Add 90 degrees to make the bee face forward
       // Subtract 45 degrees to account for the SVG's clockwise rotation
-      this.rotation = angle + 90 - 45;
+      // Fine-tune the adjustment for precise alignment
+      this.rotation = angle + 90 - 42;
 
-      // Faster rotation for more responsive movement
+      // Even more responsive rotation for snappy movement
       if (this.previousRotation !== undefined) {
         // Normalize angles to handle wrap-around
         let angleDiff = this.rotation - this.previousRotation;
         while (angleDiff > 180) angleDiff -= 360;
         while (angleDiff < -180) angleDiff += 360;
 
-        // Much faster rotation (80% responsiveness) for snappy movement
-        this.rotation = this.previousRotation + angleDiff * 0.8;
+        // Much faster rotation (90% responsiveness) for very snappy movement
+        this.rotation = this.previousRotation + angleDiff * 0.9;
       }
 
       this.previousRotation = this.rotation;
+
+      if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.logToConsole) {
+        // Debug rotation occasionally (not every frame to avoid spam)
+        if (this.time % 500 < 16) {
+          console.log(`🐝 Bee rotation: ${this.rotation.toFixed(1)}°, {
+            dx: dx.toFixed(2),
+            dy: dy.toFixed(2),
+            angle: angle.toFixed(1),
+            movement: Math.sqrt(dx * dx + dy * dy).toFixed(2)
+          }`);
+        }
+      }
     }
   }
 

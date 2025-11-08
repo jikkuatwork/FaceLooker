@@ -45,7 +45,7 @@ export class FaceLooker {
     this.isActive = false;
     this.container = null;
     this.faceImage = null;
-    this.id = this.generateId();
+    this.id = options.id || this.generateId();
 
     // Event listeners for cleanup
     this.eventListeners = new Set();
