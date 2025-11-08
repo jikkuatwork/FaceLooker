@@ -7,6 +7,7 @@ import { APP_CONFIG, DEBUG_CONFIG } from './config.js';
 import { faceSetLoader } from './data/FaceSetLoader.js';
 import { imageCache } from './data/ImageCache.js';
 import { eventBus, EVENT_NAMES } from './events/EventBus.js';
+import { animationDriver } from './animation/AnimationDriver.js';
 
 // Debug logging function
 function debugLog(...args) {
@@ -23,6 +24,7 @@ export class FaceLooker {
       faces: options.faces || './faces/02/', // Default fallback, will be updated in async init
       ...options,
 
+      
       // Callbacks
       onLoad: options.onLoad || (() => {}),
       onError: options.onError || (() => {}),
@@ -84,6 +86,7 @@ export class FaceLooker {
       }
 
       this.createContainer();
+      this.initializeAnimationDriver();
       await this.loadMetaData();
 
       // Emit viewer ready event
@@ -553,6 +556,46 @@ export class FaceLooker {
     }
   }
 
+  /**
+   * Initialize animation driver subscription
+   */
+  initializeAnimationDriver() {
+    // Subscribe to global animation driver events (if it's running)
+    this.cursorMoveSubscription = eventBus.on(EVENT_NAMES.CURSOR_MOVED, (data, event) => {
+      // Only respond to animation driver events when not using mouse directly
+      if (event.source === 'AnimationDriver') {
+        this.updateFromClient(data.x, data.y);
+      }
+    });
+
+    debugLog('🔴 Animation driver subscription initialized for viewer:', this.id);
+  }
+
+  /**
+   * Get canvas boundaries for animation driver
+   * @returns {Object} Canvas bounds {x, y, width, height}
+   */
+  getCanvasBounds() {
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height
+      };
+    }
+
+    // Fallback to window bounds
+    return {
+      x: 0,
+      y: 0,
+      width: window.innerWidth,
+      height: window.innerHeight
+    };
+  }
+
   addDragHandlers() {
     let offsetX = 0;
     let offsetY = 0;
@@ -718,6 +761,12 @@ export class FaceLooker {
     if (this.eventHandlers) {
       window.removeEventListener('mousemove', this.eventHandlers.handleMouseMove);
       window.removeEventListener('touchmove', this.eventHandlers.handleTouchMove);
+    }
+
+    // Clean up animation driver subscription
+    if (this.cursorMoveSubscription) {
+      this.cursorMoveSubscription();
+      this.cursorMoveSubscription = null;
     }
 
     // Clean up all stored event listeners

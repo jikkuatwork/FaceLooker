@@ -1081,6 +1081,65 @@
       padding: 4px 0;
     }
 
+    /* Animation Driver Controls */
+    .animation-select {
+      padding: 4px 8px;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      font-size: 12px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .animation-select:hover {
+      border-color: #6366f1;
+    }
+
+    .animation-select:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .speed-slider {
+      flex: 1;
+      margin-right: 8px;
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .speed-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #6366f1;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .speed-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #6366f1;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .speed-value {
+      font-size: 12px;
+      color: #666;
+      min-width: 35px;
+      text-align: right;
+    }
+
     </style>
 </head>
 <body>
@@ -1155,6 +1214,33 @@
                 <input type="checkbox" id="labelToggle">
                 <span class="toggle-slider"></span>
               </label>
+            </div>
+
+            <!-- Animation Driver Row -->
+            <div class="property-item">
+              <span class="property-label">Animation Driver</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="animationDriverToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- Animation Pattern Row -->
+            <div class="property-item" id="animationPatternRow" style="display: none;">
+              <span class="property-label">Pattern</span>
+              <select id="animationPattern" class="animation-select">
+                <option value="circular">Circular</option>
+                <option value="figure8">Figure 8</option>
+                <option value="sine">Sine Wave</option>
+                <option value="random">Random</option>
+              </select>
+            </div>
+
+            <!-- Animation Speed Row -->
+            <div class="property-item" id="animationSpeedRow" style="display: none;">
+              <span class="property-label">Speed</span>
+              <input type="range" id="animationSpeed" min="0.1" max="3" step="0.1" value="1" class="speed-slider">
+              <span id="speedValue" class="speed-value">1.0x</span>
             </div>
           </div>
 
@@ -1994,6 +2080,87 @@
     // Update all viewers when universal controls change
     ['debugToggle', 'labelToggle'].forEach(id => {
       document.getElementById(id).addEventListener('change', updateAllViewers);
+    });
+
+    // Animation Driver Controls
+    const animationDriverToggle = document.getElementById('animationDriverToggle');
+    const animationPatternRow = document.getElementById('animationPatternRow');
+    const animationSpeedRow = document.getElementById('animationSpeedRow');
+    const animationPattern = document.getElementById('animationPattern');
+    const animationSpeed = document.getElementById('animationSpeed');
+    const speedValue = document.getElementById('speedValue');
+
+    // Global animation driver instance
+    let globalAnimationDriver = null;
+
+    // Animation driver toggle
+    animationDriverToggle.addEventListener('change', async (e) => {
+      const isEnabled = e.target.checked;
+
+      if (isEnabled) {
+        // Show animation controls
+        animationPatternRow.style.display = 'flex';
+        animationSpeedRow.style.display = 'flex';
+
+        // Initialize global animation driver if not already done
+        if (!globalAnimationDriver) {
+          try {
+            const { animationDriver } = await import('./animation/AnimationDriver.js');
+            globalAnimationDriver = animationDriver;
+            addConsoleMessage('🔴 Animation driver module loaded');
+          } catch (error) {
+            console.error('Failed to load animation driver:', error);
+            animationDriverToggle.checked = false;
+            animationPatternRow.style.display = 'none';
+            animationSpeedRow.style.display = 'none';
+            return;
+          }
+        }
+
+        // Configure and start animation driver
+        globalAnimationDriver.updateOptions({
+          pattern: animationPattern.value,
+          speed: parseFloat(animationSpeed.value),
+          boundary: 'canvas'
+        });
+
+        globalAnimationDriver.start();
+        addConsoleMessage('🔴 Animation driver started');
+      } else {
+        // Hide animation controls
+        animationPatternRow.style.display = 'none';
+        animationSpeedRow.style.display = 'none';
+
+        // Stop animation driver
+        if (globalAnimationDriver) {
+          globalAnimationDriver.stop();
+          addConsoleMessage('🛑 Animation driver stopped');
+        }
+      }
+    });
+
+    // Animation pattern change
+    animationPattern.addEventListener('change', (e) => {
+      if (globalAnimationDriver) {
+        globalAnimationDriver.updateOptions({ pattern: e.target.value });
+        addConsoleMessage(`🔄 Animation pattern changed to: ${e.target.value}`);
+      }
+    });
+
+    // Animation speed change
+    animationSpeed.addEventListener('input', (e) => {
+      const speed = parseFloat(e.target.value);
+      speedValue.textContent = `${speed.toFixed(1)}x`;
+
+      if (globalAnimationDriver) {
+        globalAnimationDriver.updateOptions({ speed });
+      }
+    });
+
+    animationSpeed.addEventListener('change', (e) => {
+      if (globalAnimationDriver) {
+        addConsoleMessage(`⚡ Animation speed changed to: ${e.target.value}x`);
+      }
     });
 
     // Click on canvas to deselect
