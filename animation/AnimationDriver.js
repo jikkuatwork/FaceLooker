@@ -360,7 +360,8 @@ export class AnimationDriver {
       if (this.options.visualType === 'bee') {
         const svg = this.element.querySelector('svg');
         if (svg) {
-          svg.style.transform = `translate(-50%, -50%) rotate(${this.rotation}deg)`;
+          svg.style.transform = `rotate(${this.rotation}deg)`;
+          svg.style.transformOrigin = 'center center';
         }
       }
     }
@@ -391,10 +392,8 @@ export class AnimationDriver {
       let angle = Math.atan2(dy, dx) * (180 / Math.PI);
 
       // Adjust angle to point in the direction of movement
-      // Add 90 degrees to make the bee face forward
-      // Subtract 45 degrees to account for the SVG's clockwise rotation
-      // Fine-tune the adjustment for precise alignment
-      this.rotation = angle + 90 - 42;
+      // Add 90 degrees to make the bee face forward (0° points right, we want it to point up)
+      this.rotation = angle + 90;
 
       // Even more responsive rotation for snappy movement
       if (this.previousRotation !== undefined) {
