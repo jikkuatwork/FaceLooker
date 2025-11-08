@@ -1236,6 +1236,15 @@
               </select>
             </div>
 
+            <!-- Animation Visual Row -->
+            <div class="property-item" id="animationVisualRow" style="display: none;">
+              <span class="property-label">Visual</span>
+              <select id="animationVisual" class="animation-select">
+                <option value="dot">Red Dot</option>
+                <option value="bee">Bee</option>
+              </select>
+            </div>
+
             <!-- Animation Speed Row -->
             <div class="property-item" id="animationSpeedRow" style="display: none;">
               <span class="property-label">Speed</span>
@@ -2085,8 +2094,10 @@
     // Animation Driver Controls
     const animationDriverToggle = document.getElementById('animationDriverToggle');
     const animationPatternRow = document.getElementById('animationPatternRow');
+    const animationVisualRow = document.getElementById('animationVisualRow');
     const animationSpeedRow = document.getElementById('animationSpeedRow');
     const animationPattern = document.getElementById('animationPattern');
+    const animationVisual = document.getElementById('animationVisual');
     const animationSpeed = document.getElementById('animationSpeed');
     const speedValue = document.getElementById('speedValue');
 
@@ -2100,6 +2111,7 @@
       if (isEnabled) {
         // Show animation controls
         animationPatternRow.style.display = 'flex';
+        animationVisualRow.style.display = 'flex';
         animationSpeedRow.style.display = 'flex';
 
         // Initialize global animation driver if not already done
@@ -2120,6 +2132,7 @@
         // Configure and start animation driver
         globalAnimationDriver.updateOptions({
           pattern: animationPattern.value,
+          visualType: animationVisual.value,
           speed: parseFloat(animationSpeed.value),
           boundary: 'canvas'
         });
@@ -2129,6 +2142,7 @@
       } else {
         // Hide animation controls
         animationPatternRow.style.display = 'none';
+        animationVisualRow.style.display = 'none';
         animationSpeedRow.style.display = 'none';
 
         // Stop animation driver
@@ -2144,6 +2158,15 @@
       if (globalAnimationDriver) {
         globalAnimationDriver.updateOptions({ pattern: e.target.value });
         addConsoleMessage(`🔄 Animation pattern changed to: ${e.target.value}`);
+      }
+    });
+
+    // Animation visual type change
+    animationVisual.addEventListener('change', (e) => {
+      if (globalAnimationDriver) {
+        const visualType = e.target.value;
+        globalAnimationDriver.switchVisualType(visualType);
+        addConsoleMessage(`🎨 Animation visual changed to: ${visualType === 'bee' ? 'Bee' : 'Red Dot'}`);
       }
     });
 
