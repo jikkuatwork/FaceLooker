@@ -2,7 +2,7 @@
 // Caches static assets for offline functionality
 
 // Debug configuration - set to false for production
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 // Debug logging function
 function debugLog(...args) {

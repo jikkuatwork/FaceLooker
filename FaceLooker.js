@@ -3,30 +3,25 @@
  * A modern ES6 module for displaying interactive faces that follow cursor movement
  */
 
-// Debug configuration - should match the main HTML file
-const DEBUG_MODE = true; // Set to false for production to reduce console noise
+import { APP_CONFIG, DEBUG_CONFIG } from './config.js';
+import { faceSetLoader } from './data/FaceSetLoader.js';
+import { imageCache } from './data/ImageCache.js';
+import { eventBus, EVENT_NAMES } from './events/EventBus.js';
 
 // Debug logging function
 function debugLog(...args) {
-  if (DEBUG_MODE) {
+  if (DEBUG_CONFIG.enabled && DEBUG_CONFIG.logToConsole) {
     console.log(...args);
   }
 }
 
 export class FaceLooker {
   constructor(options = {}) {
-    // Configuration
+    // Configuration - merge with defaults
     this.config = {
-      faces: options.faces || './faces/01/',
-      width: options.width || 360,
-      height: options.height || 360,
-      cornerRadius: options.cornerRadius || 8,
-      downloadImagesAutomatically: options.downloadImagesAutomatically || false,
-      showDebug: options.showDebug || false,
-      enableProgress: options.enableProgress !== false,
-      showLabel: options.showLabel || false,
-      draggable: options.draggable || false,
-      resizable: options.resizable || false,
+      ...APP_CONFIG.viewer,
+      faces: options.faces || './faces/01/', // Default fallback, will be updated in async init
+      ...options,
 
       // Callbacks
       onLoad: options.onLoad || (() => {}),
@@ -36,18 +31,22 @@ export class FaceLooker {
       onReady: options.onReady || (() => {})
     };
 
-    // Grid configuration
-    this.P_MIN = -15;
-    this.P_MAX = 15;
-    this.STEP = 3;
-    this.SIZE = 256;
+    // Grid configuration from config
+    this.gridConfig = APP_CONFIG.grid;
+    this.P_MIN = this.gridConfig.min;
+    this.P_MAX = this.gridConfig.max;
+    this.STEP = this.gridConfig.step;
+    this.SIZE = this.gridConfig.imageSize;
 
     // State
-    this.imageCache = new Map();
     this.metaData = null;
     this.isActive = false;
     this.container = null;
     this.faceImage = null;
+    this.id = this.generateId();
+
+    // Event listeners for cleanup
+    this.eventListeners = new Set();
     this.debugEl = null;
     this.isDragging = false;
     this.isResizing = false;
@@ -66,9 +65,43 @@ export class FaceLooker {
     this.init();
   }
 
-  init() {
-    this.createContainer();
-    this.loadMetaData();
+  // Generate unique ID for this viewer
+  generateId() {
+    return `viewer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  async init() {
+    try {
+      // Emit viewer creation event
+      eventBus.emit(EVENT_NAMES.VIEWER_CREATED, {
+        id: this.id,
+        config: this.config
+      }, { source: 'FaceLooker' });
+
+      // Update face set path to default if needed
+      if (this.config.faces === './faces/01/') {
+        this.config.faces = await faceSetLoader.getDefaultFaceSet();
+      }
+
+      this.createContainer();
+      await this.loadMetaData();
+
+      // Emit viewer ready event
+      eventBus.emit(EVENT_NAMES.APP_READY, {
+        viewerId: this.id,
+        faceSet: this.config.faces
+      }, { source: 'FaceLooker' });
+
+    } catch (error) {
+      debugLog('Error during initialization:', error);
+      this.config.onError(error);
+
+      // Emit error event
+      eventBus.emit(EVENT_NAMES.APP_ERROR, {
+        viewerId: this.id,
+        error: error.message
+      }, { source: 'FaceLooker' });
+    }
   }
 
   createContainer() {
@@ -267,15 +300,26 @@ export class FaceLooker {
 
   async loadMetaData() {
     try {
-      const metaUrl = `${this.config.faces}meta.json`;
-      const response = await fetch(metaUrl);
+      // Use the new face set loader
+      this.metaData = await faceSetLoader.loadFaceSetMetadata(this.config.faces);
+      this.updateMetaDisplay();
 
-      if (response.ok) {
-        this.metaData = await response.json();
-        this.updateMetaDisplay();
-      }
+      // Emit face set loaded event
+      eventBus.emit(EVENT_NAMES.FACE_SET_LOADED, {
+        viewerId: this.id,
+        faceSet: this.config.faces,
+        metadata: this.metaData
+      }, { source: 'FaceLooker' });
+
     } catch (error) {
-      debugLog('No meta.json found or error loading metadata:', error);
+      debugLog('Error loading face set metadata:', error);
+
+      // Emit face set load failed event
+      eventBus.emit(EVENT_NAMES.FACE_SET_LOAD_FAILED, {
+        viewerId: this.id,
+        faceSet: this.config.faces,
+        error: error.message
+      }, { source: 'FaceLooker' });
     }
 
     this.startImageLoading();
@@ -309,6 +353,10 @@ export class FaceLooker {
       }
     }
     return filenames;
+  }
+
+  getImageUrl(x, y, size = this.SIZE) {
+    return faceSetLoader.getImageUrl(this.config.faces, x, y, size);
   }
 
   gridToFilename(px, py) {
@@ -346,57 +394,35 @@ export class FaceLooker {
     const totalImages = filenames.length;
     let loadedCount = 0;
 
-    return new Promise((resolve) => {
-      filenames.forEach(async (filename) => {
-        try {
-          if (this.config.downloadImagesAutomatically) {
-            // Download and cache as blob
-            const response = await fetch(`${this.config.faces}${filename}`);
-            if (response.ok) {
-              const blob = await response.blob();
-              const url = URL.createObjectURL(blob);
-              const img = new Image();
-              img.src = url;
-              this.imageCache.set(filename, { img, url, blob });
-            }
-          } else {
-            // Just preload as regular image
-            const img = new Image();
-            img.src = `${this.config.faces}${filename}`;
-            await new Promise((resolveImg, rejectImg) => {
-              img.onload = resolveImg;
-              img.onerror = rejectImg;
-            });
-            this.imageCache.set(filename, { img, url: img.src });
-          }
+    // Convert filenames to full URLs
+    const imageUrls = filenames.map(filename => `${this.config.faces}${filename}`);
 
-          this.config.onImageLoad(filename, loadedCount + 1, totalImages);
-        } catch (error) {
-          console.warn(`Failed to load image: ${filename}`, error);
-        }
+    // Use the new image cache module for batch preloading
+    const results = await imageCache.preloadBatch(imageUrls, (loaded, total, url) => {
+      loadedCount = loaded;
+      const progress = (loaded / total) * 100;
 
-        loadedCount++;
-        const progress = (loadedCount / totalImages) * 100;
+      // Update progress display
+      if (this.progressBar) {
+        this.progressBar.style.width = `${progress}%`;
+      }
+      if (this.progressText) {
+        this.progressText.textContent = `Loading face images... ${loaded}/${total}`;
+      }
 
-        // Update progress UI
-        if (this.progressBar) {
-          this.progressBar.style.width = `${progress}%`;
-        }
-        if (this.progressText) {
-          this.progressText.textContent = `Loading face images... ${loadedCount}/${totalImages}`;
-        }
+      // Call progress callback
+      this.config.onProgress(progress, loaded, total, url);
 
-        // Trigger progress callback
-        this.config.onProgress(progress, loadedCount, totalImages);
-
-        // Check if all images are loaded
-        if (loadedCount === totalImages) {
-          this.config.onLoad(this.imageCache, this.metaData);
-          this.activate();
-          resolve();
-        }
-      });
+      // Call individual image load callback
+      const filename = url.split('/').pop();
+      this.config.onImageLoad(filename, loaded, total);
     });
+
+    // Resolve when all are complete
+    // After preloading is done, activate the viewer
+    this.config.onLoad(imageCache.getStats(), this.metaData);
+    this.activate();
+    return results;
   }
 
   activate() {
@@ -453,7 +479,7 @@ export class FaceLooker {
     this.updateFromClient(centerX, centerY);
   }
 
-  updateFromClient(clientX, clientY) {
+  async updateFromClient(clientX, clientY) {
     const rect = this.container.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -467,16 +493,30 @@ export class FaceLooker {
     const px = this.quantizeToGrid(clampedX);
     const py = this.quantizeToGrid(clampedY);
 
-    const filename = this.gridToFilename(px, py);
-    const cachedImage = this.imageCache.get(filename);
+    const imageUrl = this.getImageUrl(px, py);
 
-    if (cachedImage && this.faceImage) {
-      this.faceImage.src = cachedImage.url;
+    try {
+      // Use the new image cache
+      const image = await imageCache.get(imageUrl);
+      if (this.faceImage) {
+        this.faceImage.src = image.src;
+      }
+
+      // Emit gaze changed event
+      eventBus.emit(EVENT_NAMES.VIEWER_GAZE_CHANGED, {
+        viewerId: this.id,
+        x: px,
+        y: py,
+        imageUrl
+      }, { source: 'FaceLooker' });
+
+    } catch (error) {
+      debugLog('Error loading face image:', error);
     }
 
     // Update debug info
     if (this.debugEl) {
-      this.debugEl.innerHTML = `Mouse: (${Math.round(clientX - rect.left)}, ${Math.round(clientY - rect.top)})<br/>Image: ${filename}`;
+      this.debugEl.innerHTML = `Mouse: (${Math.round(clientX - rect.left)}, ${Math.round(clientY - rect.top)})<br/>Gaze: (${px.toFixed(1)}, ${py.toFixed(1)})<br/>Image: ${imageUrl.split('/').pop()}`;
     }
   }
 
@@ -636,25 +676,34 @@ export class FaceLooker {
   }
 
   destroy() {
+    // Emit viewer destruction event
+    eventBus.emit(EVENT_NAMES.VIEWER_DESTROYED, {
+      id: this.id
+    }, { source: 'FaceLooker' });
+
     // Remove event listeners
     if (this.eventHandlers) {
       window.removeEventListener('mousemove', this.eventHandlers.handleMouseMove);
       window.removeEventListener('touchmove', this.eventHandlers.handleTouchMove);
     }
 
-    // Clean up blob URLs if using download mode
-    if (this.config.downloadImagesAutomatically) {
-      this.imageCache.forEach(({ url }) => {
-        if (url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
+    // Clean up all stored event listeners
+    for (const cleanupFn of this.eventListeners) {
+      cleanupFn();
     }
+    this.eventListeners.clear();
 
     // Remove container from DOM
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }
+
+    // Clear references
+    this.container = null;
+    this.faceImage = null;
+    this.debugEl = null;
+    this.metaData = null;
+    this.isActive = false;
   }
 
   select() {

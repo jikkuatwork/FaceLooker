@@ -20,6 +20,33 @@
   <link rel="icon" type="image/png" href="assets/icon.png">
   <link rel="shortcut icon" href="assets/icon.png">
   <style>
+    /* CSS Custom Properties for Theming */
+    :root {
+      --color-primary: #6366f1;
+      --color-primary-hover: #5558e3;
+      --color-secondary: #64748b;
+      --color-background: #fafafa;
+      --color-surface: #ffffff;
+      --color-border: #e5e7eb;
+      --color-border-light: #d1d5db;
+      --color-text: #374151;
+      --color-text-secondary: #6b7280;
+      --color-accent: #f59e0b;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+
+      --shadow-small: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-large: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+
+      --radius-small: 4px;
+      --radius-medium: 6px;
+      --radius-large: 8px;
+
+      --font-family: ui-sans-serif, system-ui, Arial, sans-serif;
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -29,20 +56,21 @@
     html, body {
       height: 100vh;
       overflow: hidden;
-      font-family: ui-sans-serif, system-ui, Arial, sans-serif;
-      background: #fafafa;
+      font-family: var(--font-family);
+      background: var(--color-background);
+      color: var(--color-text);
     }
 
     /* Navbar */
     .navbar {
       height: 48px;
-      background: white;
-      border-bottom: 1px solid #e5e7eb;
+      background: var(--color-surface);
+      border-bottom: 1px solid var(--color-border);
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      box-shadow: var(--shadow-small);
       z-index: 100;
     }
 
@@ -1360,7 +1388,7 @@
     import { FaceLooker } from './FaceLooker.js';
 
     // Debug configuration
-    const DEBUG_MODE = true; // Set to false for production to reduce console noise
+    const DEBUG_MODE = false; // Set to false for production to reduce console noise
 
     // Debug logging function
     function debugLog(...args) {
@@ -1429,11 +1457,15 @@
           throw new Error('Registry.json not found');
         }
 
-        const registryPaths = await registryResponse.json();
+        const registryData = await registryResponse.json();
         availableFaceSets = [];
 
+        // Handle new registry format with faceSets array or old format
+        const registryPaths = registryData.faceSets || registryData;
+
         // Process each path from registry
-        for (const path of registryPaths) {
+        for (const faceSet of registryPaths) {
+          const path = typeof faceSet === 'string' ? faceSet : faceSet.path;
           try {
             // Extract folder name from path (e.g., "faces/01/" -> "01")
             let folderName;
