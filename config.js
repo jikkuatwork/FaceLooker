@@ -8,11 +8,11 @@ const isDevelopment = window.location.hostname === 'localhost' ||
                      window.location.hostname === '127.0.0.1' ||
                      window.location.protocol === 'file:';
 
-// Debug configuration
+// Debug configuration - disabled for production
 export const DEBUG_CONFIG = {
-  enabled: isDevelopment,
-  logToConsole: isDevelopment,
-  showDebugPanel: isDevelopment
+  enabled: false,
+  logToConsole: false,
+  showDebugPanel: false
 };
 
 // Application configuration

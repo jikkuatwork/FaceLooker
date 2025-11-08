@@ -1,62 +1,97 @@
-# Face Looker (Vanilla) 👁️
+# FaceLooker 👁️
 
-Create an interactive face that follows the cursor using plain HTML, CSS, and JavaScript. No frameworks. No build step.
+A modern ES6 modular implementation of interactive face tracking that follows cursor movement or autonomous animation patterns.
 
-## What this is
+## Features
 
-- A tiny vanilla JS widget that swaps images based on pointer position
-- Designed to work with a pre-generated grid of face images (generated elsewhere)
+- **Interactive Face Tracking**: Faces follow cursor movement in real-time
+- **Autonomous Animation**: Red dot or bee animation with multiple movement patterns (circular, figure-8, sine wave, random)
+- **Modular ES6 Architecture**: Clean, maintainable code structure with event-driven communication
+- **Multiple Face Sets**: Support for different face sets with easy switching
+- **Responsive Design**: Touch-friendly interface with modern UI controls
+- **Performance Optimized**: Image caching, lazy loading, and efficient rendering
+- **Customizable Settings**: Adjustable viewer sizes, debug modes, labels, and animation parameters
 
-## Quick start
+## Quick Start
 
-1) Put your gaze images in a `faces/` folder next to `index.html` using this naming pattern:
+1. Open `index.html` in a modern browser (Chrome, Firefox, Safari, Edge)
+2. Click **Add Viewer** to create interactive face tracking instances
+3. Move your mouse over the faces to see them track your cursor
+4. Use the **Animation Driver** tab to enable autonomous movement patterns
+
+### Adding Your Own Face Sets
+
+1. Create a folder in the `faces/` directory (e.g., `faces/myface/`)
+2. Add face images using the naming pattern: `gaze_px{X}_py{Y}_{SIZE}.webp`
+3. Include a `meta.json` file with face information:
+   ```json
+   {
+     "name": "Person Name",
+     "subtitle": "Description or #ID",
+     "author": "Photographer/Creator",
+     "source": "https://example.com",
+     "license": "CC BY-SA 4.0"
+   }
+   ```
+4. Add your folder to `registry.json` to make it available in the app
+
+## Project Structure
 
 ```
-gaze_px{X}_py{Y}_{SIZE}.webp
+face_looker/
+├── index.html           # Main application
+├── config.js           # Application configuration
+├── FaceLooker.js       # Main face tracking class
+├── animation/
+│   └── AnimationDriver.js # Autonomous animation system
+├── data/
+│   ├── FaceSetLoader.js   # Face set management
+│   └── ImageCache.js      # Image caching system
+├── events/
+│   └── EventBus.js        # Event communication system
+├── assets/
+│   └── bee.svg            # Bee animation graphic
+├── faces/              # Face sets directory
+├── registry.json       # Available face sets
+└── README.md
 ```
-
-Defaults expected by the script:
-
-- P_MIN = -15, P_MAX = 15
-- STEP = 3 (values like -15, -12, ..., 0, 3, ..., 15)
-- SIZE = 256 (filename suffix)
-
-Examples:
-
-- `gaze_px0_py0_256.webp` (center)
-- `gaze_px15_py0_256.webp` (right)
-- `gaze_px0_pym15_256.webp` (up)
-
-2) Open `index.html` in a browser (or serve the folder with any static server).
-
-That's it. Move your cursor over the face.
 
 ## Configuration
 
-In `index.html`, adjust attributes on the `.face-tracker` element:
+The application uses a modular configuration system:
 
-- `data-base-path` (default `/faces/`) — where images are served from
-- `data-debug` (`true` | `false`) — show overlay with mouse coords and filename
+- **Viewer Settings**: Size, appearance, debug modes
+- **Grid Configuration**: Tracking grid parameters (min/max positions, step size)
+- **Performance Settings**: Cache size, optimization options
+- **Animation Settings**: Movement patterns, speed, visual types
 
-Multiple faces are supported — add more `.face-tracker` elements with different `data-base-path` values.
+## Animation Patterns
 
-## How it works
+The Animation Driver supports multiple autonomous movement patterns:
 
-`face-tracker.js` maps pointer position to normalized coordinates in \([-1, 1]\), snaps to the nearest grid point using your step size, then picks the corresponding filename.
+- **Circular**: Smooth circular motion
+- **Figure-8**: Figure-8 pattern movement
+- **Sine**: Sinusoidal wave movement
+- **Random**: Random walk with smooth interpolation
 
-If you change your generation parameters, update these constants in `face-tracker.js` to match:
+## Browser Support
 
-```
-const P_MIN = -15;
-const P_MAX = 15;
-const STEP = 3;
-const SIZE = 256;
-```
+- Modern browsers with ES6 module support
+- Touch devices (mobile, tablet)
+- Responsive design adapts to different screen sizes
 
-## Styling
+## Credits
 
-Edit `FaceTracker.css` to change size, shape, or add effects. Wrap the `.face-tracker` in your own container to control its dimensions.
+**Project Website**: [https://facelooker.toolbomber.com](https://facelooker.toolbomber.com)
+
+**Original Concept**: Based on [Kylan O'Connor's face_looker](https://github.com/kylapo/face_looker)
+
+**ES6 Module Implementation**: Built by [Jikku Jose](https://x.com/jikkujose)
 
 ## License
 
-MIT — use in personal and commercial projects.
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Contributing
+
+This project welcomes contributions! Please ensure your code follows the existing modular architecture and includes proper documentation.

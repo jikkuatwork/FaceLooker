@@ -1,7 +1,7 @@
 {
-  "name": "FaceLooker",
+  "name": "FaceLooker - Interactive Face Tracking",
   "short_name": "FaceLooker",
-  "description": "Interactive face tracking experience with multiple face sets",
+  "description": "Interactive face tracking experience with multiple face sets and autonomous animation",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fafafa",
@@ -9,6 +9,7 @@
   "orientation": "any",
   "scope": "/",
   "lang": "en",
+  "id": "https://facelooker.toolbomber.com/",
   "icons": [
     {
       "src": "assets/icon.png",
