@@ -103,12 +103,13 @@ function fetchAndCacheFaceImage(request) {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      return response;
-    })
-    .then((response) => {
+
+      // Clone the response before using it for caching
+      const responseToCache = response.clone();
+
       // Cache the face image
       caches.open(FACE_CACHE_NAME)
-        .then((cache) => cache.put(request, response.clone()))
+        .then((cache) => cache.put(request, responseToCache))
         .catch((error) => {
           console.warn('Failed to cache face image:', error);
         });

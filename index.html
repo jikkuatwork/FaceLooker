@@ -99,6 +99,26 @@
       gap: 8px;
     }
 
+    .sidebar-toggle {
+      display: none;
+      background: none;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #6b7280;
+      transition: all 0.2s ease;
+    }
+
+    .sidebar-toggle:hover {
+      background: #f3f4f6;
+      color: #374151;
+    }
+
+    .sidebar-toggle:active {
+      background: #e5e7eb;
+    }
+
     .nav-btn {
       display: flex;
       align-items: center;
@@ -275,26 +295,13 @@
       flex-direction: column;
     }
 
-    .sidebar-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid #e0e0e0;
-      background: white;
-    }
-
-    .sidebar-header h1 {
-      font-size: 11px;
-      font-weight: 500;
-      color: #8e8e8e;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
+    
     /* Figma-style Tabs */
     .tabs {
       display: flex;
       background: white;
       border-bottom: 1px solid #e0e0e0;
-      padding: 0 4px;
+      padding: 12px 4px 0 4px;
     }
 
     .tab {
@@ -926,6 +933,33 @@
         height: auto;
         border-right: none;
         border-bottom: 1px solid #e0e0e0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        position: relative;
+        z-index: 10;
+      }
+
+      .sidebar.hidden {
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+      }
+
+      .sidebar-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar-toggle svg {
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar-toggle.rotated svg {
+        transform: rotate(180deg);
       }
 
       .tab-content {
@@ -1189,16 +1223,19 @@
       <h1>FaceLooker</h1>
     </div>
     <div class="navbar-controls">
+      <!-- Mobile Sidebar Toggle -->
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path id="chevronUp" d="m6 9 6 6 6-6" style="display: block;"/>
+          <path id="chevronDown" d="m18 15-6-6-6 6" style="display: none;"/>
+        </svg>
+      </button>
     </div>
   </div>
 
   <div class="app-container">
     <!-- Sidebar -->
     <div class="sidebar">
-      <div class="sidebar-header">
-        <h1>Properties</h1>
-      </div>
-
       <!-- Figma-style Tabs -->
       <div class="tabs">
         <button class="tab active" data-tab="demo">Design</button>
@@ -2383,6 +2420,56 @@
     detectFaceSets().then(() => {
       resetViewers();
     });
+
+    // Mobile Sidebar Toggle Functionality
+    function initializeSidebarToggle() {
+      const sidebarToggle = document.getElementById('sidebarToggle');
+      const sidebar = document.querySelector('.sidebar');
+      const chevronUp = document.getElementById('chevronUp');
+      const chevronDown = document.getElementById('chevronDown');
+
+      if (!sidebarToggle || !sidebar || !chevronUp || !chevronDown) return;
+
+      let isSidebarVisible = true;
+
+      function toggleSidebar() {
+        isSidebarVisible = !isSidebarVisible;
+
+        if (isSidebarVisible) {
+          sidebar.classList.remove('hidden');
+          chevronUp.style.display = 'block';
+          chevronDown.style.display = 'none';
+        } else {
+          sidebar.classList.add('hidden');
+          chevronUp.style.display = 'none';
+          chevronDown.style.display = 'block';
+        }
+      }
+
+      sidebarToggle.addEventListener('click', toggleSidebar);
+
+      // Only show toggle on mobile
+      function checkMobile() {
+        if (window.innerWidth <= 768) {
+          sidebarToggle.style.display = 'flex';
+        } else {
+          sidebarToggle.style.display = 'none';
+          sidebar.classList.remove('hidden');
+          chevronUp.style.display = 'block';
+          chevronDown.style.display = 'none';
+          isSidebarVisible = true;
+        }
+      }
+
+      // Initial check
+      checkMobile();
+
+      // Listen for resize events
+      window.addEventListener('resize', checkMobile);
+    }
+
+    // Initialize sidebar toggle when DOM is ready
+    initializeSidebarToggle();
 
     // Make globally accessible
     window.faceViewers = viewers;
