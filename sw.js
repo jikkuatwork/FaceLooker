@@ -11,11 +11,11 @@ function debugLog(...args) {
   }
 }
 
-const CACHE_NAME = 'facelooker-v1';
+const CACHE_NAME = 'facelooker-v2';
 const STATIC_CACHE_URLS = [
   '/',
   '/index.html',
-  '/manifest.json',
+  '/manifest.webmanifest',
   '/FaceLooker.js'
 ];
 
