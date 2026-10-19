@@ -2,6 +2,18 @@
 
 A modern ES6 modular implementation of interactive face tracking that follows cursor movement or autonomous animation patterns.
 
+## Holm App Spec v1
+
+This app uses the Holm App Spec v1 layout: `holm.json` at the root and the public
+files in `web/`. Project notes and docs stay at the root and are never served.
+Deploy with:
+
+```sh
+holm @zyt app deploy . --spec-v1 --host facelooker.zyt.app
+```
+
+Add `--move` once, for the first deploy over the old-format app.
+
 ## Features
 
 - **Interactive Face Tracking**: Faces follow cursor movement in real-time
@@ -14,14 +26,14 @@ A modern ES6 modular implementation of interactive face tracking that follows cu
 
 ## Quick Start
 
-1. Open `index.html` in a modern browser (Chrome, Firefox, Safari, Edge)
+1. Open `web/index.html` in a modern browser (Chrome, Firefox, Safari, Edge)
 2. Click **Add Viewer** to create interactive face tracking instances
 3. Move your mouse over the faces to see them track your cursor
 4. Use the **Animation Driver** tab to enable autonomous movement patterns
 
 ### Adding Your Own Face Sets
 
-1. Create a folder in the `faces/` directory (e.g., `faces/myface/`)
+1. Create a folder in the `web/faces/` directory (e.g., `web/faces/myface/`)
 2. Add face images using the naming pattern: `gaze_px{X}_py{Y}_{SIZE}.webp`
 3. Include a `meta.json` file with face information:
    ```json
@@ -33,26 +45,28 @@ A modern ES6 modular implementation of interactive face tracking that follows cu
      "license": "CC BY-SA 4.0"
    }
    ```
-4. Add your folder to `registry.json` to make it available in the app
+4. Add your folder to `web/registry.json` to make it available in the app
 
 ## Project Structure
 
 ```
 face_looker/
-├── index.html           # Main application
-├── config.js           # Application configuration
-├── FaceLooker.js       # Main face tracking class
-├── animation/
-│   └── AnimationDriver.js # Autonomous animation system
-├── data/
-│   ├── FaceSetLoader.js   # Face set management
-│   └── ImageCache.js      # Image caching system
-├── events/
-│   └── EventBus.js        # Event communication system
-├── assets/
-│   └── bee.svg            # Bee animation graphic
-├── faces/              # Face sets directory
-├── registry.json       # Available face sets
+├── holm.json            # Holm App Spec v1 settings
+├── web/                 # Public files
+│   ├── index.html           # Main application
+│   ├── config.js            # Application configuration
+│   ├── FaceLooker.js        # Main face tracking class
+│   ├── animation/
+│   │   └── AnimationDriver.js # Autonomous animation system
+│   ├── data/
+│   │   ├── FaceSetLoader.js   # Face set management
+│   │   └── ImageCache.js      # Image caching system
+│   ├── events/
+│   │   └── EventBus.js        # Event communication system
+│   ├── assets/
+│   │   └── bee.svg            # Bee animation graphic
+│   ├── faces/               # Face sets directory
+│   └── registry.json        # Available face sets
 └── README.md
 ```
 

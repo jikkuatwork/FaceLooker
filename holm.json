@@ -1,0 +1,8 @@
+{
+  "name": "facelooker",
+  "web": {
+    "inject": {
+      "analytics": true
+    }
+  }
+}
